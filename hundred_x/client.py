@@ -16,7 +16,7 @@ from web3.exceptions import TransactionNotFound
 from hundred_x.constants import CONTRACTS, ENV_TO_BASE_URL, ENV_TO_WEBSOCKET_URL, LOGIN_MESSAGE
 from hundred_x.eip_712 import CancelOrder, CancelOrders, LoginMessage, Order, Withdraw
 from hundred_x.enums import Environment, OrderSide, OrderType, TimeInForce
-from hundred_x.utils import get_abi
+from hundred_x.utils import from_message_to_payload, get_abi
 
 headers = {
     "Accept": "application/json",
@@ -83,19 +83,12 @@ class HundredXClient:
             nonce=self._current_timestamp(),
             **self.get_shared_params(subaccount_id=subaccount_id, asset=asset),
         )
-        body = {
-            "account": message["account"],
-            "asset": message["asset"],
-            "subAccountId": message["subAccountId"],
-            "quantity": str(message["quantity"]),
-            "nonce": message["nonce"],
-            "signature": message["signature"],
-        }
+        payload = from_message_to_payload(message)
 
         res = requests.post(
             self.rest_url + "/v1/withdraw",
             headers=self.authenticated_headers,
-            json=body,
+            json=payload,
         )
         if res.status_code != 200:
             raise Exception(f"Failed to withdraw: `{res.text}` code: {res.status_code} {self.rest_url} ")
@@ -139,20 +132,7 @@ class HundredXClient:
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
         )
-
-        payload = {
-            "account": message["account"],
-            "subAccountId": message["subAccountId"],
-            "productId": message["productId"],
-            "isBuy": message["isBuy"],
-            "orderType": message["orderType"],
-            "timeInForce": message["timeInForce"],
-            "expiration": message["expiration"],
-            "price": str(message["price"]),
-            "quantity": str(message["quantity"]),
-            "nonce": message["nonce"],
-            "signature": message["signature"],
-        }
+        payload = from_message_to_payload(message)
         res = requests.post(
             self.rest_url + "/v1/order",
             headers=self.authenticated_headers,
@@ -191,26 +171,12 @@ class HundredXClient:
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
         )
-        payload = {
-            "account": message["account"],
-            "subAccountId": message["subAccountId"],
-            "productId": message["productId"],
-            "isBuy": message["isBuy"],
-            "orderType": message["orderType"],
-            "timeInForce": message["timeInForce"],
-            "expiration": message["expiration"],
-            "price": str(message["price"]),
-            "quantity": str(message["quantity"]),
-            "nonce": message["nonce"],
-            "signature": message["signature"],
-            "idToCancel": order_id_to_cancel,
-        }
+        payload = from_message_to_payload(message)
         res = requests.post(
             self.rest_url + "/v1/order/cancel-and-replace",
             headers=self.authenticated_headers,
             json=payload,
         )
-
         if res.status_code != 200:
             raise Exception(f"Failed to create order: `{res.text}` {res.status_code} {self.rest_url} {payload}")
         return res.json()
@@ -227,20 +193,14 @@ class HundredXClient:
             **self.get_shared_params(),
         )
 
-        body = {
-            "account": message["account"],
-            "subAccountId": message["subAccountId"],
-            "productId": message["productId"],
-            "orderId": message["orderId"],
-            "signature": message["signature"],
-        }
+        payload = from_message_to_payload(message)
         res = requests.delete(
             self.rest_url + "/v1/order",
             headers=self.authenticated_headers,
-            json=body,
+            json=payload,
         )
         if res.status_code != 200:
-            raise Exception(f"Failed to cancel order: {res.text} {res.status_code} {self.rest_url} {body}")
+            raise Exception(f"Failed to cancel order: {res.text} {res.status_code} {self.rest_url} {payload}")
         return res.json()
 
     def cancel_all_orders(self, subaccount_id: int, product_id: int):
@@ -254,19 +214,10 @@ class HundredXClient:
             **self.get_shared_params(),
         )
 
-        body = {
-            "account": message["account"],
-            "subAccountId": message["subAccountId"],
-            "productId": message["productId"],
-            "signature": message["signature"],
-        }
-        res = requests.delete(
-            self.rest_url + "/v1/openOrders",
-            headers=self.authenticated_headers,
-            json=body,
-        )
+        payload = from_message_to_payload(message)
+        res = requests.delete(self.rest_url + "/v1/openOrders", headers=self.authenticated_headers, json=payload)
         if res.status_code != 200:
-            raise Exception(f"Failed to cancel all orders: {res.text} {res.status_code} {self.rest_url} {body}")
+            raise Exception(f"Failed to cancel all orders: {res.text} {res.status_code} {self.rest_url} {payload}")
         return res.json()
 
     def create_authenticated_session_with_service(self):
