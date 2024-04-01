@@ -62,6 +62,17 @@ class HundredXClient:
         timestamp_ms = int(time.time() * 1000)
         return timestamp_ms
 
+    def generate_and_sign_message(self, message_class, **kwargs):
+        """
+        Generate and sign a message.
+        """
+        message = message_class(**kwargs)
+        message = message.to_message(self.domain)
+        signable_message = encode_structured_data(message)
+        signed = self.wallet.sign_message(signable_message)
+        message["message"]["signature"] = signed.signature.hex()
+        return message["message"]
+
     def get_shared_params(self, asset: str = None, subaccount_id: int = None):
         params = {
             "account": self.public_key,
@@ -71,6 +82,21 @@ class HundredXClient:
         if subaccount_id is not None:
             params["subAccountId"] = subaccount_id
         return params
+
+    def send_message_to_endpoint(self, endpoint: str, method: str, message: dict, authenticated: bool = True):
+        """
+        Send a message to an endpoint.
+        """
+        payload = from_message_to_payload(message)
+        response = requests.request(
+            method,
+            self.rest_url + endpoint,
+            headers={} if not authenticated else self.authenticated_headers,
+            json=payload,
+        )
+        if response.status_code != 200:
+            raise Exception(f"Failed to send message: {response.text} {response.status_code} {self.rest_url} {payload}")
+        return response.json()
 
     def withdraw(self, subaccount_id: int, quantity: int, asset: str = "USDB"):
         """
@@ -83,27 +109,7 @@ class HundredXClient:
             nonce=self._current_timestamp(),
             **self.get_shared_params(subaccount_id=subaccount_id, asset=asset),
         )
-        payload = from_message_to_payload(message)
-
-        res = requests.post(
-            self.rest_url + "/v1/withdraw",
-            headers=self.authenticated_headers,
-            json=payload,
-        )
-        if res.status_code != 200:
-            raise Exception(f"Failed to withdraw: `{res.text}` code: {res.status_code} {self.rest_url} ")
-        return res.json()
-
-    def generate_and_sign_message(self, message_class, **kwargs):
-        """
-        Generate and sign a message.
-        """
-        message = message_class(**kwargs)
-        message = message.to_message(self.domain)
-        signable_message = encode_structured_data(message)
-        signed = self.wallet.sign_message(signable_message)
-        message["message"]["signature"] = signed.signature.hex()
-        return message["message"]
+        return self.send_message_to_endpoint("/v1/withdraw", "POST", message)
 
     def create_order(
         self,
@@ -132,16 +138,7 @@ class HundredXClient:
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
         )
-        payload = from_message_to_payload(message)
-        res = requests.post(
-            self.rest_url + "/v1/order",
-            headers=self.authenticated_headers,
-            json=payload,
-        )
-
-        if res.status_code != 200:
-            raise Exception(f"Failed to create order: `{res.text}` {res.status_code} {self.rest_url} {payload}")
-        return res.json()
+        return self.send_message_to_endpoint("/v1/order", "POST", message)
 
     def cancel_and_replace_order(
         self,
@@ -171,15 +168,8 @@ class HundredXClient:
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
         )
-        payload = from_message_to_payload(message)
-        res = requests.post(
-            self.rest_url + "/v1/order/cancel-and-replace",
-            headers=self.authenticated_headers,
-            json=payload,
-        )
-        if res.status_code != 200:
-            raise Exception(f"Failed to create order: `{res.text}` {res.status_code} {self.rest_url} {payload}")
-        return res.json()
+        message["orderIdToCancel"] = order_id_to_cancel
+        return self.send_message_to_endpoint("/v1/cancel-and-replace", "PUT", message)
 
     def cancel_order(self, subaccount_id: int, product_id: int, order_id: int):
         """
@@ -192,16 +182,7 @@ class HundredXClient:
             orderId=order_id,
             **self.get_shared_params(),
         )
-
-        payload = from_message_to_payload(message)
-        res = requests.delete(
-            self.rest_url + "/v1/order",
-            headers=self.authenticated_headers,
-            json=payload,
-        )
-        if res.status_code != 200:
-            raise Exception(f"Failed to cancel order: {res.text} {res.status_code} {self.rest_url} {payload}")
-        return res.json()
+        return self.send_message_to_endpoint("/v1/order", "DELETE", message)
 
     def cancel_all_orders(self, subaccount_id: int, product_id: int):
         """
@@ -213,12 +194,7 @@ class HundredXClient:
             productId=product_id,
             **self.get_shared_params(),
         )
-
-        payload = from_message_to_payload(message)
-        res = requests.delete(self.rest_url + "/v1/openOrders", headers=self.authenticated_headers, json=payload)
-        if res.status_code != 200:
-            raise Exception(f"Failed to cancel all orders: {res.text} {res.status_code} {self.rest_url} {payload}")
-        return res.json()
+        return self.send_message_to_endpoint("/v1/openOrders", "DELETE", message)
 
     def create_authenticated_session_with_service(self):
         login_payload = self.generate_and_sign_message(
@@ -227,42 +203,27 @@ class HundredXClient:
             timestamp=self._current_timestamp(),
             **self.get_shared_params(),
         )
-
-        headers = {
-            "Content-type": "application/json",
-        }
-        response = requests.post(self.rest_url + "/v1/session/login", headers=headers, json=login_payload)
-
-        if response.status_code != 200:
-            raise Exception(
-                f"Failed to authenticate with 100x: {response.text} {response.status_code} "
-                + f"{self.rest_url} {login_payload}"
-            )
-        self.session_cookie = response.json().get("value")
-        response = response.json()
+        response = self.send_message_to_endpoint("/v1/session/login", "POST", login_payload, authenticated=False)
+        self.session_cookie = response.get("value")
         return response
 
     def list_products(self) -> List[Any]:
         """
         Get a list of all available products.
         """
-        endpoint = "/v1/products"
-
-        return requests.get(self.rest_url + endpoint).json()
+        return requests.get(self.rest_url + "/v1/products").json()
 
     def get_product(self, product_symbol: str) -> Any:
         """
         Get the details of a specific product.
         """
-        endpoint = f"/v1/products/{product_symbol}"
-        return requests.get(self.rest_url + endpoint).json()
+        return requests.get(self.rest_url + f"/v1/products/{product_symbol}").json()
 
     def get_server_time(self) -> Any:
         """
         Get the server time.
         """
-        endpoint = "/v1/time"
-        return requests.get(self.rest_url + endpoint).json()
+        return requests.get(self.rest_url + "/v1/time").json()
 
     def get_candlestick(self, symbol: str, **kwargs) -> Any:
         """
@@ -304,14 +265,14 @@ class HundredXClient:
         Login to the exchange.
         """
         response = self.create_authenticated_session_with_service()
-        assert response is not None
+        if response is None:
+            raise Exception("Failed to login")
 
     def get_session_status(self):
         """
         Get the current session status.
         """
-        response = requests.get(self.rest_url + "/v1/session/status", headers=self.authenticated_headers)
-        return response.json()
+        return requests.get(self.rest_url + "/v1/session/status", headers=self.authenticated_headers).json()
 
     @property
     def authenticated_headers(self):
@@ -323,25 +284,23 @@ class HundredXClient:
         """
         Logout from the exchange.
         """
-        response = requests.get(self.rest_url + "/v1/session/logout", headers=self.authenticated_headers)
-        return response.json()
+        return requests.get(self.rest_url + "/v1/session/logout", headers=self.authenticated_headers).json()
 
     def get_spot_balances(self):
         """
         Get the spot balances.
         """
-        response = requests.get(
+        return requests.get(
             self.rest_url + "/v1/balances",
             headers=self.authenticated_headers,
             params={"account": self.public_key, "subAccountId": self.subaccount_id},
-        )
-        return response.json()
+        ).json()
 
     def get_position(self, symbol: str):
         """
         Get the position for a specific symbol.
         """
-        response = requests.get(
+        return requests.get(
             self.rest_url + "/v1/positionRisk",
             headers=self.authenticated_headers,
             params={
@@ -349,19 +308,17 @@ class HundredXClient:
                 "account": self.public_key,
                 "subAccountId": self.subaccount_id,
             },
-        )
-        return response.json()
+        ).json()
 
     def get_approved_signers(self):
         """
         Get the approved signers.
         """
-        response = requests.get(
+        return requests.get(
             self.rest_url + "/v1/approved-signers",
             headers=self.authenticated_headers,
             params={"account": self.public_key, "subAccountId": self.subaccount_id},
-        )
-        return response.json()
+        ).json()
 
     def get_open_orders(
         self,
@@ -373,12 +330,11 @@ class HundredXClient:
         params = {"account": self.public_key, "subAccountId": self.subaccount_id}
         if symbol is not None:
             params["symbol"] = symbol
-        response = requests.get(
+        return requests.get(
             self.rest_url + "/v1/openOrders",
             headers=self.authenticated_headers,
             params=params,
-        )
-        return response.json()
+        ).json()
 
     def get_orders(self, symbol: str = None, ids: List[str] = None):
         """
