@@ -189,7 +189,7 @@ def test_withdraw_signature(client):
     """
     Test the withdraw_signature method of the Client class.
     """
-    client._get_nonce = lambda: 1711722371
+    client._current_timestamp = lambda: 1711722371
     withdrawal_message = client.generate_withdrawal_message(subaccount_id=0, quantity=100)
 
     assert (
@@ -219,7 +219,7 @@ def test_order_signature(client):
     """
     Test the withdraw_signature method of the Client class.
     """
-    client._get_nonce = lambda: 1711722373
+    client._current_timestamp = lambda: 1711722373
     order_message = client.generate_order_message(
         subaccount_id=0,
         product_id=1002,

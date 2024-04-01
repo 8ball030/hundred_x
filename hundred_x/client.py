@@ -91,7 +91,7 @@ class HundredXClient:
         """
         Withdraw an asset.
         """
-        ts = self._get_nonce()
+        ts = self._current_timestamp()
         quantity = int(quantity * 1e18)
 
         shared_params = {
@@ -134,9 +134,6 @@ class HundredXClient:
             raise Exception(f"Failed to withdraw: `{res.text}` code: {res.status_code} {self.rest_url} ")
         return res.json()
 
-    def _get_nonce(self):
-        return int(time.time() * 1000)
-
     def generate_order_message(
         self,
         subaccount_id: int,
@@ -150,7 +147,7 @@ class HundredXClient:
         """
         Create an order.
         """
-        timestamp_ms = self._get_nonce()
+        timestamp_ms = self._current_timestamp()
 
         expiration = (timestamp_ms + 1000 * 60 * 60 * 24) * 1000
 
