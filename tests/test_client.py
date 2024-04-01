@@ -7,11 +7,21 @@ from datetime import datetime
 import pytest
 
 from hundred_x.client import HundredXClient
+from hundred_x.eip_712 import Order, Withdraw
 from hundred_x.enums import Environment, OrderSide, OrderType, TimeInForce
 
 DEFAULT_SYMBOL = "ethperp"
 TEST_PRIVATE_KEY = "0x8f58e47491ac5fe6897216208fe1fed316d6ee89de6c901bfc521c2178ebe6dd"
 TEST_ADDRESS = "0xEEF7faba495b4875d67E3ED8FB3a32433d3DB3b3"
+TEST_ORDER = {
+    "subaccount_id": 0,
+    "product_id": 1002,
+    "quantity": 1,
+    "price": 3000,
+    "side": OrderSide.BUY,
+    "order_type": OrderType.LIMIT,
+    "time_in_force": TimeInForce.GTC,
+}
 
 
 @pytest.fixture
@@ -190,7 +200,12 @@ def test_withdraw_signature(client):
     Test the withdraw_signature method of the Client class.
     """
     client._current_timestamp = lambda: 1711722371
-    withdrawal_message = client.generate_withdrawal_message(subaccount_id=0, quantity=100)
+    withdrawal_message = client.generate_and_sign_message(
+        message_class=Withdraw,
+        quantity=int(100 * 10**18),
+        nonce=client._current_timestamp(),
+        **client.get_shared_params(subaccount_id=0, asset="USDB"),
+    )
 
     assert (
         withdrawal_message["signature"]
@@ -204,13 +219,7 @@ def test_order(client):
     """
     client.login()
     order = client.create_order(
-        subaccount_id=0,
-        product_id=1002,
-        quantity=1,
-        price=3000,
-        side=OrderSide.BUY,
-        order_type=OrderType.LIMIT,
-        time_in_force=TimeInForce.GTC,
+        **TEST_ORDER,
     )
     assert order is not None
 
@@ -220,14 +229,22 @@ def test_order_signature(client):
     Test the withdraw_signature method of the Client class.
     """
     client._current_timestamp = lambda: 1711722373
-    order_message = client.generate_order_message(
-        subaccount_id=0,
-        product_id=1002,
-        quantity=1,
-        price=3000,
-        side=OrderSide.BUY,
-        order_type=OrderType.LIMIT,
-        time_in_force=TimeInForce.GTC,
+    ts = client._current_timestamp()
+
+    order_message = client.generate_and_sign_message(
+        message_class=Order,
+        expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
+        nonce=client._current_timestamp(),
+        productId=TEST_ORDER["product_id"],
+        isBuy=TEST_ORDER["side"].value,
+        orderType=TEST_ORDER["order_type"].value,
+        price=TEST_ORDER["price"] * 10**18,
+        quantity=TEST_ORDER["quantity"] * 10**18,
+        timeInForce=TEST_ORDER["time_in_force"].value,
+        **client.get_shared_params(
+            subaccount_id=TEST_ORDER["subaccount_id"],
+            asset="USDB",
+        ),
     )
 
     assert (
@@ -242,13 +259,7 @@ def test_cancel_order(client):
     """
     client.login()
     order = client.create_order(
-        subaccount_id=0,
-        product_id=1002,
-        quantity=1,
-        price=3000,
-        side=OrderSide.BUY,
-        order_type=OrderType.LIMIT,
-        time_in_force=TimeInForce.GTC,
+        **TEST_ORDER,
     )
     assert order is not None
     cancel_order = client.cancel_order(subaccount_id=0, product_id=1002, order_id=order["id"])
@@ -261,13 +272,7 @@ def test_cancel_orders(client):
     """
     client.login()
     order = client.create_order(
-        subaccount_id=0,
-        product_id=1002,
-        quantity=1,
-        price=3000,
-        side=OrderSide.BUY,
-        order_type=OrderType.LIMIT,
-        time_in_force=TimeInForce.GTC,
+        **TEST_ORDER,
     )
     assert order is not None
     cancel_order = client.cancel_all_orders(subaccount_id=0, product_id=1002)
@@ -281,23 +286,10 @@ def test_cancel_and_replace_order(client):
     """
     client.login()
     order = client.create_order(
-        subaccount_id=0,
-        product_id=1002,
-        quantity=1,
-        price=3000,
-        side=OrderSide.BUY,
-        order_type=OrderType.LIMIT,
-        time_in_force=TimeInForce.GTC,
+        **TEST_ORDER,
     )
     assert order is not None
     cancel_order = client.cancel_and_replace_order(
-        subaccount_id=0,
-        product_id=1002,
-        quantity=2,
-        price=4000,
-        side=OrderSide.BUY,
-        order_type=OrderType.LIMIT,
-        time_in_force=TimeInForce.GTC,
-        order_id_to_cancel=order["id"],
+        **TEST_ORDER,
     )
     assert cancel_order is not None

@@ -62,60 +62,27 @@ class HundredXClient:
         timestamp_ms = int(time.time() * 1000)
         return timestamp_ms
 
-    def _generate_eip_712_login_message(self):
-        login_message = LoginMessage(
-            account=self.public_key,
-            message=LOGIN_MESSAGE,
-            timestamp=self._current_timestamp(),
-        )
-        return login_message.to_message(self.domain)
-
-    def _sign_eip_712_login_message(self, login_data: dict):
-        signable_message = encode_structured_data(login_data)
-        signed = self.wallet.sign_message(signable_message)
-        return signed
-
-    def _extract_message_append_signature(self, login_message, signed):
-        signature = signed.signature
-        message = login_message["message"]
-        message["signature"] = signature.hex()
-        return message
-
-    def _generate_authenticate_payload(self):
-        login_message = self._generate_eip_712_login_message()
-        signed = self._sign_eip_712_login_message(login_message)
-        message = self._extract_message_append_signature(login_message, signed)
-        return message
-
-    def generate_withdrawal_message(self, subaccount_id: int, quantity: int, asset: str = "USDB"):
-        """
-        Withdraw an asset.
-        """
-        ts = self._current_timestamp()
-        quantity = int(quantity * 1e18)
-
-        shared_params = {
+    def get_shared_params(self, asset: str = None, subaccount_id: int = None):
+        params = {
             "account": self.public_key,
-            "asset": self.get_contract_address(asset),
-            "subAccountId": subaccount_id,
         }
-        withdrawal_message = Withdraw(quantity=quantity, nonce=ts, **shared_params)
-        message = withdrawal_message.to_message(self.domain)
-
-        signable_message = encode_structured_data(message)
-        signed = self.wallet.sign_message(signable_message)
-
-        message["message"]["signature"] = signed.signature.hex()
-
-        return message["message"]
+        if asset is not None:
+            params["asset"] = self.get_contract_address(asset)
+        if subaccount_id is not None:
+            params["subAccountId"] = subaccount_id
+        return params
 
     def withdraw(self, subaccount_id: int, quantity: int, asset: str = "USDB"):
         """
         Generate a withdrawal message and sign it.
         """
 
-        message = self.generate_withdrawal_message(subaccount_id, quantity, asset)
-
+        message = self.generate_and_sign_message(
+            Withdraw,
+            quantity=int(quantity * 1e18),
+            nonce=self._current_timestamp(),
+            **self.get_shared_params(subaccount_id=subaccount_id, asset=asset),
+        )
         body = {
             "account": message["account"],
             "asset": message["asset"],
@@ -134,37 +101,12 @@ class HundredXClient:
             raise Exception(f"Failed to withdraw: `{res.text}` code: {res.status_code} {self.rest_url} ")
         return res.json()
 
-    def generate_order_message(
-        self,
-        subaccount_id: int,
-        product_id: int,
-        quantity: int,
-        price: int,
-        side: OrderSide,
-        order_type: OrderType,
-        time_in_force: TimeInForce,
-    ):
+    def generate_and_sign_message(self, message_class, **kwargs):
         """
-        Create an order.
+        Generate and sign a message.
         """
-        timestamp_ms = self._current_timestamp()
-
-        expiration = (timestamp_ms + 1000 * 60 * 60 * 24) * 1000
-
-        order_message = Order(
-            account=self.public_key,
-            subAccountId=subaccount_id,
-            productId=product_id,
-            isBuy=side.value,
-            orderType=order_type.value,
-            timeInForce=time_in_force.value,
-            expiration=expiration,
-            price=int(price * 1e18),
-            quantity=int(quantity * 1e18),
-            nonce=timestamp_ms,
-        )
-
-        message = order_message.to_message(self.domain)
+        message = message_class(**kwargs)
+        message = message.to_message(self.domain)
         signable_message = encode_structured_data(message)
         signed = self.wallet.sign_message(signable_message)
         message["message"]["signature"] = signed.signature.hex()
@@ -183,8 +125,19 @@ class HundredXClient:
         """
         Create an order.
         """
-        message = self.generate_order_message(
-            subaccount_id, product_id, quantity, price, side, order_type, time_in_force
+        ts = self._current_timestamp()
+        message = self.generate_and_sign_message(
+            Order,
+            subAccountId=subaccount_id,
+            productId=product_id,
+            quantity=int(quantity * 1e18),
+            price=int(price * 1e18),
+            isBuy=side.value,
+            orderType=order_type.value,
+            timeInForce=time_in_force.value,
+            nonce=ts,
+            expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
+            **self.get_shared_params(),
         )
 
         payload = {
@@ -205,8 +158,6 @@ class HundredXClient:
             headers=self.authenticated_headers,
             json=payload,
         )
-        # breakpoint()
-        # # we now try to verify the signature
 
         if res.status_code != 200:
             raise Exception(f"Failed to create order: `{res.text}` {res.status_code} {self.rest_url} {payload}")
@@ -226,8 +177,19 @@ class HundredXClient:
         """
         Cancel and replace an order.
         """
-        message = self.generate_order_message(
-            subaccount_id, product_id, quantity, price, side, order_type, time_in_force
+        ts = self._current_timestamp()
+        message = self.generate_and_sign_message(
+            Order,
+            subAccountId=subaccount_id,
+            productId=product_id,
+            quantity=int(quantity * 1e18),
+            price=int(price * 1e18),
+            isBuy=side.value,
+            orderType=order_type.value,
+            timeInForce=time_in_force.value,
+            nonce=ts,
+            expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
+            **self.get_shared_params(),
         )
         payload = {
             "account": message["account"],
@@ -253,27 +215,18 @@ class HundredXClient:
             raise Exception(f"Failed to create order: `{res.text}` {res.status_code} {self.rest_url} {payload}")
         return res.json()
 
-    def generate_cancel_order_msg(self, subaccount_id: int, product_id: int, order_id: int):
-        """
-        Cancel an order.
-        """
-        cancel_order_message = CancelOrder(
-            account=self.public_key,
-            subAccountId=subaccount_id,
-            productId=product_id,
-            orderId=order_id,
-        )
-        message = cancel_order_message.to_message(self.domain)
-        signable_message = encode_structured_data(message)
-        signed = self.wallet.sign_message(signable_message)
-        message["message"]["signature"] = signed.signature.hex()
-        return message["message"]
-
     def cancel_order(self, subaccount_id: int, product_id: int, order_id: int):
         """
         Cancel an order.
         """
-        message = self.generate_cancel_order_msg(subaccount_id, product_id, order_id)
+        message = self.generate_and_sign_message(
+            CancelOrder,
+            subAccountId=subaccount_id,
+            productId=product_id,
+            orderId=order_id,
+            **self.get_shared_params(),
+        )
+
         body = {
             "account": message["account"],
             "subAccountId": message["subAccountId"],
@@ -290,26 +243,17 @@ class HundredXClient:
             raise Exception(f"Failed to cancel order: {res.text} {res.status_code} {self.rest_url} {body}")
         return res.json()
 
-    def generate_all_orders_message(self, subaccount_id: int, product_id: int):
-        """
-        Cancel all orders.
-        """
-        cancel_order_message = CancelOrders(
-            account=self.public_key,
-            subAccountId=subaccount_id,
-            productId=product_id,
-        )
-        message = cancel_order_message.to_message(self.domain)
-        signable_message = encode_structured_data(message)
-        signed = self.wallet.sign_message(signable_message)
-        message["message"]["signature"] = signed.signature.hex()
-        return message["message"]
-
     def cancel_all_orders(self, subaccount_id: int, product_id: int):
         """
         Cancel all orders.
         """
-        message = self.generate_all_orders_message(subaccount_id, product_id)
+        message = self.generate_and_sign_message(
+            CancelOrders,
+            subAccountId=subaccount_id,
+            productId=product_id,
+            **self.get_shared_params(),
+        )
+
         body = {
             "account": message["account"],
             "subAccountId": message["subAccountId"],
@@ -326,7 +270,13 @@ class HundredXClient:
         return res.json()
 
     def create_authenticated_session_with_service(self):
-        login_payload = self._generate_authenticate_payload()
+        login_payload = self.generate_and_sign_message(
+            LoginMessage,
+            message=LOGIN_MESSAGE,
+            timestamp=self._current_timestamp(),
+            **self.get_shared_params(),
+        )
+
         headers = {
             "Content-type": "application/json",
         }
