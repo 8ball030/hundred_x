@@ -5,6 +5,15 @@ Enmum for the hundred_x package
 from enum import Enum
 
 
+class ApiType(Enum):
+    """
+    Enum for the API type.
+    """
+
+    REST = "REST"
+    WEBSOCKET = "WEBSOCKET"
+
+
 class Environment(Enum):
     """
     Enum for the environment of the client.
@@ -12,7 +21,7 @@ class Environment(Enum):
 
     PROD = "prod"
     TESTNET = "testnet"
-    LOCAL = "local"
+    DEVNET = "local"
 
 
 class OrderType(Enum):

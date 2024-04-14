@@ -13,9 +13,9 @@ from eth_account.messages import encode_structured_data
 from web3 import Web3
 from web3.exceptions import TransactionNotFound
 
-from hundred_x.constants import CONTRACTS, ENV_TO_BASE_URL, ENV_TO_WEBSOCKET_URL, LOGIN_MESSAGE
+from hundred_x.constants import APIS, CONTRACTS, LOGIN_MESSAGE
 from hundred_x.eip_712 import CancelOrder, CancelOrders, LoginMessage, Order, Withdraw
-from hundred_x.enums import Environment, OrderSide, OrderType, TimeInForce
+from hundred_x.enums import ApiType, Environment, OrderSide, OrderType, TimeInForce
 from hundred_x.utils import from_message_to_payload, get_abi
 
 headers = {
@@ -28,12 +28,7 @@ PROTOCOL_ABI = get_abi("protocol")
 ERC_20_ABI = get_abi("erc20")
 
 
-VERIFYING_CONTRACT = "0x65CbB566D1A6E60107c0c7888761de1AdFa1ccC0"
-CHAIN_ID = 168587773
-
-
 class HundredXClient:
-
     def __init__(
         self,
         env: Environment = Environment.TESTNET,
@@ -43,20 +38,20 @@ class HundredXClient:
         """
         Initialize the client with the given environment.
         """
-        self.domain = make_domain(
-            name="100x",
-            version="0.0.0",
-            chainId=CHAIN_ID,
-            verifyingContract=VERIFYING_CONTRACT,
-        )
         self.env = env
-        self.rest_url = ENV_TO_BASE_URL[env]
-        self.websocket_url = ENV_TO_WEBSOCKET_URL[env]
+        self.rest_url = APIS[env][ApiType.REST]
+        self.websocket_url = APIS[env][ApiType.WEBSOCKET]
         self.wallet = eth_account.Account.from_key(private_key)
         self.public_key = self.wallet.address
         self.subaccount_id = subaccount_id
         self.session_cookie = {}
         self.web3 = Web3(Web3.HTTPProvider("https://sepolia.blast.io"))
+        self.domain = make_domain(
+            name="100x",
+            version="0.0.0",
+            chainId=CONTRACTS[env]["CHAIN_ID"],
+            verifyingContract=CONTRACTS[env]["VERIFYING_CONTRACT"],
+        )
 
     def _current_timestamp(self):
         timestamp_ms = int(time.time() * 1000)
