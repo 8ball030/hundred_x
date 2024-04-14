@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hundred-x"
-version = "0.1.8"
+version = "0.1.7"
 description = "# hundred_x"
 authors = ["8baller <8ball030@gmail.com>"]
 readme = "README.md"
@@ -9,9 +9,9 @@ packages = [{include = "hundred_x"}]
 [tool.poetry.dependencies]
 python = ">=3.9,<=3.11"
 requests = "^2.31.0"
-eth-account = "^0.11.0"
+eth-account = "<=0.11.0"
 eip712-structs = "^1.1.0"
-web3 = "^6.15.1"
+web3 = ">=5,<6"
 
 
 [tool.poetry.group.dev.dependencies]
