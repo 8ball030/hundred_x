@@ -7,8 +7,8 @@ from hundred_x.enums import ApiType, Environment
 DEVNET_REST_URL = "https://api.dev.ciaobella.dev"
 DEVNET_WEBSOCKET_URL = "https://stream.dev.ciaobella.dev"
 
-TESTNET_REST_URL = "https://staging.100x.finance"
-TESTNET_WEBSOCKET_URL = "https://staging.100x.finance"
+TESTNET_REST_URL = "https://api.staging.100x.finance"
+TESTNET_WEBSOCKET_URL = "https://stream.staging.100x.finance"
 
 MAINNET_REST_URL = "https://api.100x.finance"
 MAINNET_WEBSOCKET_URL = "https://stream.100x.finance"
