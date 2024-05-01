@@ -7,8 +7,8 @@ from hundred_x.enums import ApiType, Environment
 DEVNET_REST_URL = "https://api.dev.ciaobella.dev"
 DEVNET_WEBSOCKET_URL = "https://stream.dev.ciaobella.dev"
 
-TESTNET_REST_URL = "https://staging.100x.finance"
-TESTNET_WEBSOCKET_URL = "https://staging.100x.finance"
+TESTNET_REST_URL = "https://api.staging.100x.finance"
+TESTNET_WEBSOCKET_URL = "https://stream.staging.100x.finance"
 
 MAINNET_REST_URL = "https://api.100x.finance"
 MAINNET_WEBSOCKET_URL = "https://stream.100x.finance"
@@ -35,8 +35,8 @@ LOGIN_MESSAGE = "I would like to login to 100x finance."
 CONTRACTS = {
     Environment.TESTNET: {
         "USDB": "0x79A59c326C715AC2d31C169C85d1232319E341ce",
-        "PROTOCOL": "0x63bD0ca355Cfc117F5176E5eF3e34A6D60081937",
-        "VERIFYING_CONTRACT": "0x65CbB566D1A6E60107c0c7888761de1AdFa1ccC0",
+        "PROTOCOL": "0x0c3b9472b3923CfE199bAE24B5f5bD75FAD2bae9",
+        "VERIFYING_CONTRACT": "0x02Ca4fcB63E2D3C89fa20D86ccDcfc540c683545",
         "CHAIN_ID": 168587773,
     },
     Environment.DEVNET: {
