@@ -44,6 +44,7 @@ TEST_ORDER_DECIMAL_PRICE = {
     "time_in_force": TimeInForce.GTC,
 }
 
+
 class TestDevnetClient(TestCase):
     """
     Base class for the Client class tests.

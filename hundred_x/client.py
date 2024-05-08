@@ -128,8 +128,8 @@ class HundredXClient:
             Order,
             subAccountId=subaccount_id,
             productId=product_id,
-            quantity= int(Decimal(str(quantity)) * Decimal(1e18)),
-            price= int(Decimal(str(price)) * Decimal(1e18)),
+            quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
+            price=int(Decimal(str(price)) * Decimal(1e18)),
             isBuy=side.value,
             orderType=order_type.value,
             timeInForce=time_in_force.value,
@@ -226,7 +226,7 @@ class HundredXClient:
             self.rest_url + "/v1/trade-history",
             params={"symbol": symbol, "lookback": lookback},
         ).json()
-    
+
     def get_server_time(self) -> Any:
         """
         Get the server time.
