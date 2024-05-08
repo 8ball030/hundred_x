@@ -3,6 +3,7 @@
 Client class is a wrapper around the REST API of the exchange. It provides methods to interact with the exchange API.
 """
 
+from decimal import Decimal
 import time
 from typing import Any, List
 
@@ -115,21 +116,24 @@ class HundredXClient:
         side: OrderSide,
         order_type: OrderType,
         time_in_force: TimeInForce,
+        nonce: int = 0,
     ):
         """
         Create an order.
         """
         ts = self._current_timestamp()
+        if nonce == 0:
+            nonce = ts
         message = self.generate_and_sign_message(
             Order,
             subAccountId=subaccount_id,
             productId=product_id,
-            quantity=int(quantity * 1e18),
-            price=int(price * 1e18),
+            quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
+            price=int(Decimal(str(price)) * Decimal(1e18)),
             isBuy=side.value,
             orderType=order_type.value,
             timeInForce=time_in_force.value,
-            nonce=ts,
+            nonce=nonce,
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
         )
@@ -154,8 +158,8 @@ class HundredXClient:
             Order,
             subAccountId=subaccount_id,
             productId=product_id,
-            quantity=int(quantity * 1e18),
-            price=int(price * 1e18),
+            quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
+            price=int(Decimal(str(price)) * Decimal(1e18)),
             isBuy=side.value,
             orderType=order_type.value,
             timeInForce=time_in_force.value,
@@ -213,6 +217,15 @@ class HundredXClient:
         Get the details of a specific product.
         """
         return requests.get(self.rest_url + f"/v1/products/{product_symbol}").json()
+
+    def get_trade_history(self, symbol: str, lookback: int) -> Any:
+        """
+        Get the trade history for a specific product symbol and lookback amount.
+        """
+        return requests.get(
+            self.rest_url + "/v1/trade-history",
+            params={"symbol": symbol, "lookback": lookback},
+        ).json()
 
     def get_server_time(self) -> Any:
         """
@@ -358,7 +371,7 @@ class HundredXClient:
         Deposit an asset.
         """
         # we need to check if we have sufficient balance to deposit
-        required_wei = int(quantity * 1e18)
+        required_wei = int(Decimal(str(quantity)) * Decimal(1e18))
         # we check the approvals
         asset_contract = self.get_contract(asset)
 

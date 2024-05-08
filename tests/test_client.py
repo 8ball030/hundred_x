@@ -24,6 +24,26 @@ TEST_ORDER = {
     "time_in_force": TimeInForce.GTC,
 }
 
+TEST_ORDER_DECIMAL_QUANTITY = {
+    "subaccount_id": 1,
+    "product_id": 1006,
+    "quantity": 4000.73,
+    "price": 4,
+    "side": OrderSide.BUY,
+    "order_type": OrderType.LIMIT,
+    "time_in_force": TimeInForce.GTC,
+}
+
+TEST_ORDER_DECIMAL_PRICE = {
+    "subaccount_id": 1,
+    "product_id": 1002,
+    "quantity": 1,
+    "price": 3000.13,
+    "side": OrderSide.BUY,
+    "order_type": OrderType.LIMIT,
+    "time_in_force": TimeInForce.GTC,
+}
+
 
 class TestDevnetClient(TestCase):
     """
@@ -111,6 +131,15 @@ class TestDevnetClient(TestCase):
         assert depth is not None
         assert "bids" in depth, "Failed to get depth data."
         assert "asks" in depth, "Failed to get depth data."
+
+    def test_get_trade_history(
+        self,
+    ):
+        """
+        Test the get_trade_history method of the Client class.
+        """
+        trade_history = self.client.get_trade_history(DEFAULT_SYMBOL, lookback=10)
+        assert trade_history is not None
 
     def test_login(
         self,
@@ -236,6 +265,30 @@ class TestDevnetClient(TestCase):
             withdrawal_message["signature"]
             == "0x7e943abf014646836b59d2dcf120e533f5843fc7033c95b030184c6b2b062dfe37c1bdf6b7cec4d722cc75cd6bd36eadcb91868e2cc50fd974de92ce784a47531b"  # noqa: E501
         )
+
+    def test_order_decimal_number_quantity(
+        self,
+    ):
+        """
+        Test the order method of the Client class.
+        """
+        self.client.login()
+        order = self.client.create_order(
+            **TEST_ORDER_DECIMAL_QUANTITY,
+        )
+        assert order is not None
+
+    def test_order_decimal_number_price(
+        self,
+    ):
+        """
+        Test the order method of the Client class.
+        """
+        self.client.login()
+        order = self.client.create_order(
+            **TEST_ORDER_DECIMAL_PRICE,
+        )
+        assert order is not None
 
     def test_order(
         self,
