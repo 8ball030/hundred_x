@@ -115,11 +115,14 @@ class HundredXClient:
         side: OrderSide,
         order_type: OrderType,
         time_in_force: TimeInForce,
+        nonce: int = 0,
     ):
         """
         Create an order.
         """
         ts = self._current_timestamp()
+        if nonce == 0:
+            nonce = ts
         message = self.generate_and_sign_message(
             Order,
             subAccountId=subaccount_id,
@@ -129,7 +132,7 @@ class HundredXClient:
             isBuy=side.value,
             orderType=order_type.value,
             timeInForce=time_in_force.value,
-            nonce=ts,
+            nonce=nonce,
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
         )
