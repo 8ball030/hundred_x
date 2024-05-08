@@ -222,7 +222,7 @@ class HundredXClient:
         Get the trade history for a specific product symbol and lookback amount.
         """
         return requests.get(
-            self.rest_url + f"/v1/trade-history",
+            self.rest_url + "/v1/trade-history",
             params={"symbol": symbol, "lookback": lookback},
         ).json()
     
