@@ -15,7 +15,7 @@ DEFAULT_SYMBOL = "ethperp"
 TEST_PRIVATE_KEY = "0x8f58e47491ac5fe6897216208fe1fed316d6ee89de6c901bfc521c2178ebe6dd"
 TEST_ADDRESS = "0xEEF7faba495b4875d67E3ED8FB3a32433d3DB3b3"
 TEST_ORDER = {
-    "subaccount_id": 0,
+    "subaccount_id": 1,
     "product_id": 1002,
     "quantity": 1,
     "price": 3000,
@@ -36,7 +36,7 @@ class TestDevnetClient(TestCase):
         """
         Set up the Client class tests.
         """
-        self.client = HundredXClient(env=self.environment, private_key=TEST_PRIVATE_KEY)
+        self.client = HundredXClient(env=self.environment, private_key=TEST_PRIVATE_KEY, subaccount_id=1)
 
     def test_client_init(
         self,
@@ -205,7 +205,7 @@ class TestDevnetClient(TestCase):
         Test the deposit method of the Client class.
         """
         self.client.login()
-        deposit = self.client.deposit(subaccount_id=0, quantity=100)
+        deposit = self.client.deposit(subaccount_id=1, quantity=100)
         assert deposit is not None
 
     def test_withdraw(
@@ -215,7 +215,7 @@ class TestDevnetClient(TestCase):
         Test the withdraw method of the Client class.
         """
         self.client.login()
-        withdraw = self.client.withdraw(subaccount_id=0, quantity=100)
+        withdraw = self.client.withdraw(subaccount_id=1, quantity=100)
         assert withdraw is not None
 
     def test_withdraw_signature(
@@ -229,12 +229,12 @@ class TestDevnetClient(TestCase):
             message_class=Withdraw,
             quantity=int(100 * 10**18),
             nonce=self.client._current_timestamp(),
-            **self.client.get_shared_params(subaccount_id=0, asset="USDB"),
+            **self.client.get_shared_params(subaccount_id=1, asset="USDB"),
         )
 
         assert (
             withdrawal_message["signature"]
-            == "0x334a617170bd712c183ac1765bd207da6a029d9203eb5cda87fa3900b98713f86dc63d53318200ce9d889021743d84df6d41d352d452ec9370f1ef4f1a2a01141b"  # noqa: E501
+            == "0x7e943abf014646836b59d2dcf120e533f5843fc7033c95b030184c6b2b062dfe37c1bdf6b7cec4d722cc75cd6bd36eadcb91868e2cc50fd974de92ce784a47531b"  # noqa: E501
         )
 
     def test_order(
@@ -274,7 +274,7 @@ class TestDevnetClient(TestCase):
 
         assert (
             order_message["signature"]
-            == "0x5b236ae32e38833cbb594cf3a98342678fe13503578574b45c8e03543445d40a26046ecda4cdf373f50ffcc01781b818ee96394d8112aebc0906520f9e31d9c71b"  # noqa: E501
+            == "0x4f686289d48c53017c94f554d5bc626aad44ccec5e2dc244bc7f8fe753aa40ab1151c35e88e74abca2a49ce191b03c424f89e8dfe6c34ee235ee60ad10151e7d1b"  # noqa: E501
         )
 
     def test_cancel_order(
@@ -300,7 +300,7 @@ class TestDevnetClient(TestCase):
             **TEST_ORDER,
         )
         assert order is not None
-        cancel_order = self.client.cancel_all_orders(subaccount_id=0, product_id=1002)
+        cancel_order = self.client.cancel_all_orders(subaccount_id=1, product_id=1002)
         assert cancel_order is not None
 
     @pytest.mark.skip(reason="This test is not working, the endpoint fails with 400 response.")
@@ -330,4 +330,4 @@ class TestTestNetClient(TestDevnetClient):
         """
         Set up the Client class tests.
         """
-        self.client = HundredXClient(env=self.environment, private_key=TEST_PRIVATE_KEY)
+        self.client = HundredXClient(env=self.environment, private_key=TEST_PRIVATE_KEY, subaccount_id=1)
