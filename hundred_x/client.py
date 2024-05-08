@@ -3,6 +3,7 @@
 Client class is a wrapper around the REST API of the exchange. It provides methods to interact with the exchange API.
 """
 
+from decimal import Decimal
 import time
 from typing import Any, List
 
@@ -127,8 +128,8 @@ class HundredXClient:
             Order,
             subAccountId=subaccount_id,
             productId=product_id,
-            quantity=int(quantity * 1e18),
-            price=int(price * 1e18),
+            quantity= int(Decimal(str(quantity)) * Decimal(1e18)),
+            price= int(Decimal(str(price)) * Decimal(1e18)),
             isBuy=side.value,
             orderType=order_type.value,
             timeInForce=time_in_force.value,
@@ -157,8 +158,8 @@ class HundredXClient:
             Order,
             subAccountId=subaccount_id,
             productId=product_id,
-            quantity=int(quantity * 1e18),
-            price=int(price * 1e18),
+            quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
+            price=int(Decimal(str(price)) * Decimal(1e18)),
             isBuy=side.value,
             orderType=order_type.value,
             timeInForce=time_in_force.value,
@@ -370,7 +371,7 @@ class HundredXClient:
         Deposit an asset.
         """
         # we need to check if we have sufficient balance to deposit
-        required_wei = int(quantity * 1e18)
+        required_wei = int(Decimal(str(quantity)) * Decimal(1e18))
         # we check the approvals
         asset_contract = self.get_contract(asset)
 
