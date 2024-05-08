@@ -112,6 +112,15 @@ class TestDevnetClient(TestCase):
         assert "bids" in depth, "Failed to get depth data."
         assert "asks" in depth, "Failed to get depth data."
 
+    def test_get_trade_history(
+        self,
+    ):
+        """
+        Test the get_trade_history method of the Client class.
+        """
+        trade_history = self.client.get_trade_history(DEFAULT_SYMBOL, lookback=10)
+        assert trade_history is not None
+
     def test_login(
         self,
     ):

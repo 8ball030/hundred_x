@@ -217,6 +217,15 @@ class HundredXClient:
         """
         return requests.get(self.rest_url + f"/v1/products/{product_symbol}").json()
 
+    def get_trade_history(self, symbol: str, lookback: int) -> Any:
+        """
+        Get the trade history for a specific product symbol and lookback amount.
+        """
+        return requests.get(
+            self.rest_url + f"/v1/trade-history",
+            params={"symbol": symbol, "lookback": lookback},
+        ).json()
+    
     def get_server_time(self) -> Any:
         """
         Get the server time.
