@@ -24,6 +24,14 @@ TEST_ORDER = {
     "time_in_force": TimeInForce.GTC,
 }
 
+CANCEL_AND_REPLACE_ORDER = {
+    "subaccount_id": 1,
+    "product_id": 1002,
+    "quantity": 1,
+    "price": 3000,
+    "side": OrderSide.BUY,
+}
+
 TEST_ORDER_DECIMAL_QUANTITY = {
     "subaccount_id": 1,
     "product_id": 1006,
@@ -57,6 +65,10 @@ class TestDevnetClient(TestCase):
         Set up the Client class tests.
         """
         self.client = HundredXClient(env=self.environment, private_key=TEST_PRIVATE_KEY, subaccount_id=1)
+        cancel_order = self.client.cancel_all_orders(subaccount_id=1, product_id=1002)
+        assert cancel_order is not None
+        cancel_order = self.client.cancel_all_orders(subaccount_id=1, product_id=1006)
+        assert cancel_order is not None
 
     def test_client_init(
         self,
@@ -213,9 +225,6 @@ class TestDevnetClient(TestCase):
         orders = self.client.get_open_orders(DEFAULT_SYMBOL)
         assert orders is not None
 
-    # @pytest.mark.skip(
-    #     reason="This test is not working, the endpoint fails with incorrect parameters"
-    # )
     def test_get_orders(
         self,
     ):
@@ -356,7 +365,6 @@ class TestDevnetClient(TestCase):
         cancel_order = self.client.cancel_all_orders(subaccount_id=1, product_id=1002)
         assert cancel_order is not None
 
-    @pytest.mark.skip(reason="This test is not working, the endpoint fails with 400 response.")
     def test_cancel_and_replace_order(self):
         """
         Test the cancel_and_replace_order method of the Client class.
@@ -366,9 +374,7 @@ class TestDevnetClient(TestCase):
             **TEST_ORDER,
         )
         assert order is not None
-        cancel_order = self.client.cancel_and_replace_order(
-            **TEST_ORDER,
-        )
+        cancel_order = self.client.cancel_and_replace_order(**CANCEL_AND_REPLACE_ORDER, order_id_to_cancel=order["id"])
         assert cancel_order is not None
 
     def test_set_referral_code(self):

@@ -147,29 +147,32 @@ class HundredXClient:
         quantity: int,
         price: int,
         side: OrderSide,
-        order_type: OrderType,
-        time_in_force: TimeInForce,
         order_id_to_cancel: str,
+        nonce: int = 0,
     ):
         """
         Cancel and replace an order.
         """
         ts = self._current_timestamp()
-        message = self.generate_and_sign_message(
+        if nonce == 0:
+            nonce = ts
+        _message = self.generate_and_sign_message(
             Order,
             subAccountId=subaccount_id,
             productId=product_id,
             quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
             price=int(Decimal(str(price)) * Decimal(1e18)),
             isBuy=side.value,
-            orderType=order_type.value,
-            timeInForce=time_in_force.value,
-            nonce=ts,
+            orderType=OrderType.LIMIT_MAKER.value,
+            timeInForce=TimeInForce.GTC.value,
+            nonce=nonce,
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
         )
-        message["orderIdToCancel"] = order_id_to_cancel
-        return self.send_message_to_endpoint("/v1/cancel-and-replace", "PUT", message)
+        message = {}
+        message["newOrder"] = from_message_to_payload(_message)
+        message["idToCancel"] = order_id_to_cancel
+        return self.send_message_to_endpoint("/v1/order/cancel-and-replace", "POST", message)
 
     def cancel_order(self, subaccount_id: int, product_id: int, order_id: int):
         """
