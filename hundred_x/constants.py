@@ -13,6 +13,7 @@ TESTNET_WEBSOCKET_URL = "https://stream.staging.100x.finance"
 MAINNET_REST_URL = "https://api.100x.finance"
 MAINNET_WEBSOCKET_URL = "https://stream.100x.finance"
 
+REFERRAL_CODE = "8baller"
 
 APIS = {
     Environment.TESTNET: {

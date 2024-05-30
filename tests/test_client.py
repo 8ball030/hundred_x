@@ -371,6 +371,12 @@ class TestDevnetClient(TestCase):
         )
         assert cancel_order is not None
 
+    def test_set_referral_code(self):
+        """
+        Test the set_referral_code method of the Client class.
+        """
+        self.client.login()
+
 
 class TestTestNetClient(TestDevnetClient):
     """

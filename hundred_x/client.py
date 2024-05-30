@@ -3,8 +3,8 @@
 Client class is a wrapper around the REST API of the exchange. It provides methods to interact with the exchange API.
 """
 
-from decimal import Decimal
 import time
+from decimal import Decimal
 from typing import Any, List
 
 import eth_account
@@ -14,8 +14,8 @@ from eth_account.messages import encode_structured_data
 from web3 import Web3
 from web3.exceptions import TransactionNotFound
 
-from hundred_x.constants import APIS, CONTRACTS, LOGIN_MESSAGE
-from hundred_x.eip_712 import CancelOrder, CancelOrders, LoginMessage, Order, Withdraw
+from hundred_x.constants import APIS, CONTRACTS, LOGIN_MESSAGE, REFERRAL_CODE
+from hundred_x.eip_712 import CancelOrder, CancelOrders, LoginMessage, Order, Referral, Withdraw
 from hundred_x.enums import ApiType, Environment, OrderSide, OrderType, TimeInForce
 from hundred_x.utils import from_message_to_payload, get_abi
 
@@ -53,6 +53,7 @@ class HundredXClient:
             chainId=CONTRACTS[env]["CHAIN_ID"],
             verifyingContract=CONTRACTS[env]["VERIFYING_CONTRACT"],
         )
+        self.set_referral_code()
 
     def _current_timestamp(self):
         timestamp_ms = int(time.time() * 1000)
@@ -365,6 +366,23 @@ class HundredXClient:
                 f"Failed to get orders: {response.text} {response.status_code} " + f"{self.rest_url} {params}"
             )
         return response.json()
+
+    def set_referral_code(self):
+        """
+        Ensure sign a referral code.
+        """
+        referral_payload = self.generate_and_sign_message(
+            Referral,
+            code=REFERRAL_CODE,
+            **self.get_shared_params(),
+        )
+        try:
+            return self.send_message_to_endpoint("/v1/referral/add-referee", "POST", referral_payload)
+        except Exception as e:
+
+            if "user already referred" in str(e):
+                return
+            raise e
 
     def deposit(self, subaccount_id: int, quantity: int, asset: str = "USDB"):
         """

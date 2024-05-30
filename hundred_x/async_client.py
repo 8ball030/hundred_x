@@ -1,6 +1,7 @@
 """
 Async client for the HundredX API
 """
+
 from hundred_x.client import HundredXClient
 
 
@@ -26,5 +27,3 @@ class AsyncHundredXClient(HundredXClient):
         Get the server time.
         """
         return super().get_server_time()
-    
-

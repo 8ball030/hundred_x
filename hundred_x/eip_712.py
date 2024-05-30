@@ -44,3 +44,8 @@ class CancelOrders(EIP712Struct):
     account = Address()
     subAccountId = Uint(8)
     productId = Uint(32)
+
+
+class Referral(EIP712Struct):
+    account = Address()
+    code = String()
