@@ -1,33 +1,41 @@
-[tool.poetry]
+[project]
 name = "hundred-x"
-version = "0.1.15"
-description = "# hundred_x"
-authors = ["8baller <8ball030@gmail.com>"]
+version = "0.1.16"
+authors = [
+    { name = "8baller", email = "8ball030@gmail.com" },
+    { name = "Mihai Cosma", email = "mcosma@gmail.com" }
+]
+requires-python = ">= 3.10"
+description = "Python API for 100x"
 readme = "README.md"
-packages = [{include = "hundred_x"}]
+dependencies = [
+  "requests",
+  "eth-account",
+  "eip712-structs@git+https://github.com/wakamex/py-eip712-structs.git",
+  "web3",
+  "websockets",
+  "safe-pysha3",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-requests = "^2.31.0"
-eth-account = "<=0.11.0"
-eip712-structs = { git = "https://github.com/wakamex/py-eip712-structs.git", branch = "master" }
-web3 = ">=6,<7"
-websockets = ">=9"
-safe-pysha3 = "^1.0.4"
-
-
-[tool.poetry.group.dev.dependencies]
-isort = "^5.13.2"
-pylint = "^3.1.0"
-pytest = "^8.1.1"
-black = "^24.3.0"
-flake8 = "^7.0.0"
-semver = "^3.0.2"
-tbump = "^6.11.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+dev = [
+    "poetry",
+    "tox-gh-actions",
+    "tox-poetry",
+    "isort",
+    "pylint",
+    "pytest",
+    "black",
+    "flake8",
+    "semver",
+    "tbump",
+]
+all = [
+    "hundred-x[test, dev]",
+]
 
 
 [tool.isort]
@@ -44,7 +52,7 @@ skip_gitignore = true
 [tool.black]
 line-length = 120
 skip-string-normalization = true
-target-version = ['py37', 'py38', 'py39']
+target-version = ['py312']
 include = '\.pyi?$'
 exclude = '''
 /(

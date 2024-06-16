@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-versions: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -23,18 +23,17 @@ jobs:
       - name: set up python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-versions }}
+          python-version: ${{ matrix.python-version }}
+          token: ${{github.token}}
 
-      - name: Install ci dependencies
-        run: |
-          make are_deps_dirty && exit 0
-          python -m pip install --upgrade pip
-          pip install poetry tox-gh-actions tox-poetry
+      - name: install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install application deps
+      - name: install project
         run: |
-          make are_deps_dirty && exit 0
-          poetry install
+          uv venv .venv -p ${{matrix.python-version}}
+          source .venv/bin/activate
+          uv pip install -e .[all]
 
       - name: Lock application deps
         run: |
