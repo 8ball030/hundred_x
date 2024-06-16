@@ -35,7 +35,14 @@ jobs:
           source .venv/bin/activate
           uv pip install -e .[all]
 
+      - name: Install application deps
+        run: |
+          source .venv/bin/activate
+          make are_deps_dirty && exit 0
+          poetry install
+
       - name: Lock application deps
         run: |
+          source .venv/bin/activate
           make are_deps_dirty || poetry lock
           echo "No change in dependencies not locking."
