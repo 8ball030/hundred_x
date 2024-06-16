@@ -9,11 +9,8 @@ requires-python = ">= 3.10"
 description = "Python API for 100x"
 readme = "README.md"
 dependencies = [
-  "requests",
-  "eth-account",
   "eip712-structs@git+https://github.com/wakamex/py-eip712-structs.git",
   "web3",
-  "websockets",
   "safe-pysha3",
 ]
 
