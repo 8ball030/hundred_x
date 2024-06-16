@@ -31,7 +31,7 @@ jobs:
         run: |
           uv venv .venv -p ${{matrix.python-version}}
           source .venv/bin/activate
-          uv pip install -e .
+          uv pip install -e .[all]
 
       - name: Lint
         run: |
