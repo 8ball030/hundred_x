@@ -7,9 +7,7 @@ on:
   pull_request_target:
     types:
       - opened
-    branches:
-      - 'main'
-      - 'master'
+    branches: [ master, main, update ]
     paths:
       - 'pyproject.toml'
 
