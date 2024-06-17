@@ -53,12 +53,12 @@ TEST_ORDER_DECIMAL_PRICE = {
 }
 
 
-class TestDevnetClient(TestCase):
+class Testnet(TestCase):
     """
     Base class for the Client class tests.
     """
 
-    environment: Environment = Environment.DEVNET
+    environment: Environment = Environment.TESTNET
 
     def setUp(self):
         """
@@ -382,17 +382,3 @@ class TestDevnetClient(TestCase):
         Test the set_referral_code method of the Client class.
         """
         self.client.login()
-
-
-class TestTestNetClient(TestDevnetClient):
-    """
-    Base class for the Client class tests.
-    """
-
-    environment: Environment
-
-    def setUp(self):
-        """
-        Set up the Client class tests.
-        """
-        self.client = HundredXClient(env=self.environment, private_key=TEST_PRIVATE_KEY, subaccount_id=1)
