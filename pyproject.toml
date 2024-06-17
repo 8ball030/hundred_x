@@ -10,7 +10,7 @@ packages = [{include = "hundred_x"}]
 python = ">=3.9,<=3.12"
 requests = "^2.31.0"
 eth-account = "<=0.11.0"
-eip712-structs = "^1.1.0"
+eip712-structs-ng = "^2.0.1"
 web3 = ">=6,<7"
 websockets = ">=9"
 safe-pysha3 = "^1.0.4"
