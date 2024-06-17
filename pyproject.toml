@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "hundred_x"}]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<=3.12"
+python = ">=3.9,<=3.13"
 requests = "^2.31.0"
 eth-account = "<=0.11.0"
 eip712-structs-ng = "^2.0.1"
