@@ -48,6 +48,41 @@ class AsyncHundredXClient(HundredXClient):
         response = await self.send_message_to_endpoint("/v1/order", "POST", message)
         return response
 
+    async def cancel_and_replace_order(
+        self,
+        subaccount_id: int,
+        product_id: int,
+        quantity: int,
+        price: int,
+        side: OrderSide,
+        order_id_to_cancel: str,
+        nonce: int = 0,
+    ):
+        """
+        Cancel and replace an order.
+        """
+        ts = self._current_timestamp()
+        if nonce == 0:
+            nonce = ts
+        _message = self.generate_and_sign_message(
+            Order,
+            subAccountId=subaccount_id,
+            productId=product_id,
+            quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
+            price=int(Decimal(str(price)) * Decimal(1e18)),
+            isBuy=side.value,
+            orderType=OrderType.LIMIT_MAKER.value,
+            timeInForce=TimeInForce.GTC.value,
+            nonce=nonce,
+            expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
+            **self.get_shared_params(),
+        )
+        message = {}
+        message["newOrder"] = from_message_to_payload(_message)
+        message["idToCancel"] = order_id_to_cancel
+        response = await self.send_message_to_endpoint("/v1/order/cancel-and-replace", "POST", message)
+        return response
+
     async def send_message_to_endpoint(self, endpoint: str, method: str, message: dict, authenticated: bool = True):
         """
         Send a message to an endpoint.
