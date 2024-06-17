@@ -34,7 +34,7 @@ class HundredXClient:
         self,
         env: Environment = Environment.TESTNET,
         private_key: str = None,
-        subaccount_id: int = 0,
+        subaccount_id: int = 1,
     ):
         """
         Initialize the client with the given environment.
