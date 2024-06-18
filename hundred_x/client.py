@@ -32,13 +32,15 @@ ERC_20_ABI = get_abi("erc20")
 class HundredXClient:
     def __init__(
         self,
+        private_key: str,
         env: Environment = Environment.TESTNET,
-        private_key: str = None,
         subaccount_id: int = 1,
     ):
         """
         Initialize the client with the given environment.
         """
+        if subaccount_id < 0 or subaccount_id > 255:
+            raise ValueError("Subaccount ID must be a number between 0 and 255.")
         self.env = env
         self.rest_url = APIS[env][ApiType.REST]
         self.websocket_url = APIS[env][ApiType.WEBSOCKET]
