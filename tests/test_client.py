@@ -382,3 +382,19 @@ class Testnet(TestCase):
         Test the set_referral_code method of the Client class.
         """
         self.client.login()
+
+
+@pytest.mark.dev
+class Devnet(Testnet):
+    """
+    Base class for the Client class tests.
+    """
+
+    environment: Environment
+
+    def setUp(self):
+        """
+        Set up the Client class tests.
+        """
+        self.environment = Environment.DEVNET
+        self.client = HundredXClient(env=self.environment, private_key=TEST_PRIVATE_KEY, subaccount_id=1)
