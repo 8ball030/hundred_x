@@ -39,7 +39,7 @@ class HundredXClient:
         """
         Initialize the client with the given environment.
         """
-        if subaccount_id < 0 or subaccount_id > 255:
+        if 0 <= subaccount_id <= 255:
             raise ValueError("Subaccount ID must be a number between 0 and 255.")
         self.env = env
         self.rest_url = APIS[env][ApiType.REST]
