@@ -308,15 +308,14 @@ class HundredXClient:
             params={"account": self.public_key, "subAccountId": self.subaccount_id},
         ).json()
 
-    def get_position(self, symbol: str):
+    def get_position(self):
         """
-        Get the position for a specific symbol.
+        Get all positions for the subaccount.
         """
         return requests.get(
             self.rest_url + "/v1/positionRisk",
             headers=self.authenticated_headers,
             params={
-                "symbol": symbol,
                 "account": self.public_key,
                 "subAccountId": self.subaccount_id,
             },
