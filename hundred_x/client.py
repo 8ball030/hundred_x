@@ -14,9 +14,10 @@ from eth_account.messages import encode_structured_data
 from web3 import Web3
 from web3.exceptions import TransactionNotFound
 
-from hundred_x.constants import APIS, CONTRACTS, LOGIN_MESSAGE, REFERRAL_CODE
+from hundred_x.constants import APIS, CONTRACTS, LOGIN_MESSAGE, REFERRAL_CODE, RPC_URLS
 from hundred_x.eip_712 import CancelOrder, CancelOrders, LoginMessage, Order, Referral, Withdraw
 from hundred_x.enums import ApiType, Environment, OrderSide, OrderType, TimeInForce
+from hundred_x.exceptions import ClientError, UserInputValidationError
 from hundred_x.utils import from_message_to_payload, get_abi
 
 headers = {
@@ -30,11 +31,35 @@ ERC_20_ABI = get_abi("erc20")
 
 
 class HundredXClient:
+    private_functions: List[str] = [
+        "/v1/withdraw",
+        "/v1/order",
+        "/v1/order/cancel-and-replace",
+        "/v1/order",
+        "/v1/openOrders",
+        "/v1/orders",
+        "/v1/balances",
+        "/v1/positionRisk",
+        "/v1/approved-signers",
+        "/v1/session/login",
+        "/v1/referral/add-referee",
+        "/v1/session/logout",
+    ]
+    public_functions: List[str] = [
+        "/v1/products",
+        "/v1/products/{product_symbol}",
+        "/v1/trade-history",
+        "/v1/time",
+        "/v1/uiKlines",
+        "/v1/ticker/24hr",
+        "/v1/depth",
+    ]
+
     def __init__(
         self,
         env: Environment = Environment.TESTNET,
         private_key: str = None,
-        subaccount_id: int = 1,
+        subaccount_id: int = 0,
     ):
         """
         Initialize the client with the given environment.
@@ -42,11 +67,20 @@ class HundredXClient:
         self.env = env
         self.rest_url = APIS[env][ApiType.REST]
         self.websocket_url = APIS[env][ApiType.WEBSOCKET]
-        self.wallet = eth_account.Account.from_key(private_key)
-        self.public_key = self.wallet.address
-        self.subaccount_id = subaccount_id
+        if any([not self.rest_url, not self.websocket_url]):
+            raise UserInputValidationError(
+                f"Invalid environment: {env} Missing REST or WEBSOCKET URL for the environment."
+            )
+        if private_key:
+            self.wallet = eth_account.Account.from_key(private_key)
+            self.public_key = self.wallet.address
+            if not (0 <= subaccount_id <= 255):
+                raise UserInputValidationError(
+                    f"Subaccount ID must be between 0 and 255. It is instead: {subaccount_id}"
+                )
+            self.subaccount_id = subaccount_id
         self.session_cookie = {}
-        self.web3 = Web3(Web3.HTTPProvider("https://sepolia.blast.io"))
+        self.web3 = Web3(Web3.HTTPProvider(RPC_URLS[env]))
         self.domain = make_domain(
             name="100x",
             version="0.0.0",
@@ -54,6 +88,24 @@ class HundredXClient:
             verifyingContract=CONTRACTS[env]["VERIFYING_CONTRACT"],
         )
         self.set_referral_code()
+
+    def _validate_function(
+        self,
+        endpoint,
+    ):
+        """
+        Check if the endpoint is a private function.
+        """
+        if endpoint not in self.private_functions + self.public_functions:
+            raise ClientError(f"Invalid endpoint: {endpoint} Not in {self.private_functions + self.public_functions}")
+        if endpoint in self.public_functions:
+            return True
+        if endpoint in self.private_functions:
+            if not self.wallet:
+                raise UserInputValidationError(
+                    f"Private function {endpoint} requires a private key please provide one at initialization."
+                )
+            return True
 
     def _current_timestamp(self):
         timestamp_ms = int(time.time() * 1000)
@@ -63,6 +115,7 @@ class HundredXClient:
         """
         Generate and sign a message.
         """
+
         message = message_class(**kwargs)
         message = message.to_message(self.domain)
         signable_message = encode_structured_data(message)
@@ -84,6 +137,10 @@ class HundredXClient:
         """
         Send a message to an endpoint.
         """
+        if not self._validate_function(
+            endpoint,
+        ):
+            raise ClientError(f"Invalid endpoint: {endpoint}")
         payload = from_message_to_payload(message)
         response = requests.request(
             method,
@@ -381,7 +438,6 @@ class HundredXClient:
         try:
             return self.send_message_to_endpoint("/v1/referral/add-referee", "POST", referral_payload)
         except Exception as e:
-
             if "user already referred" in str(e):
                 return
             raise e
