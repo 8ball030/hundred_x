@@ -203,7 +203,7 @@ class TestDevnetClient(TestCase):
         Test the get_perpetural_position method of the Client class.
         """
         self.client.login()
-        position = self.client.get_position(DEFAULT_SYMBOL)
+        position = self.client.get_position()
         assert position is not None
 
     def test_get_approved_signers(
