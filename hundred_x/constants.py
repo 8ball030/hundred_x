@@ -2,10 +2,12 @@
 Constants for the hundred_x package.
 """
 
+import os
+
 from hundred_x.enums import ApiType, Environment
 
-DEVNET_REST_URL = "https://api.dev.ciaobella.dev"
-DEVNET_WEBSOCKET_URL = "https://stream.dev.ciaobella.dev"
+DEVNET_REST_URL = os.getenv("DEVNET_REST_URL", None)
+DEVNET_WEBSOCKET_URL = os.getenv("DEVNET_WEBSOCKET_URL", None)
 
 TESTNET_REST_URL = "https://api.staging.100x.finance"
 TESTNET_WEBSOCKET_URL = "https://stream.staging.100x.finance"
@@ -28,6 +30,12 @@ APIS = {
         ApiType.REST: DEVNET_REST_URL,
         ApiType.WEBSOCKET: DEVNET_WEBSOCKET_URL,
     },
+}
+
+RPC_URLS = {
+    Environment.DEVNET: os.getenv("DEVNET_RPC_URL", None),
+    Environment.TESTNET: "https://sepolia.blast.io",
+    Environment.PROD: "https://rpc.blast.io",
 }
 
 
