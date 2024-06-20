@@ -87,3 +87,29 @@ make release
 
 ### Contributors
 
+<table>
+<tr>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/8ball030>
+            <img src=https://avatars.githubusercontent.com/u/35799987?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=8ball030/>
+            <br />
+            <sub style="font-size:14px"><b>8ball030</b></sub>
+        </a>
+    </td>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/kjr217>
+            <img src=https://avatars.githubusercontent.com/u/55159119?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=kjr217/>
+            <br />
+            <sub style="font-size:14px"><b>kjr217</b></sub>
+        </a>
+    </td>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href=https://github.com/wakamex>
+            <img src=https://avatars.githubusercontent.com/u/16990562?v=4 width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Mihai/>
+            <br />
+            <sub style="font-size:14px"><b>Mihai</b></sub>
+        </a>
+    </td>
+</tr>
+</table>
+
