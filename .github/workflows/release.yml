@@ -35,6 +35,16 @@ jobs:
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+      - uses: BobAnkh/add-contributors@master
+        with:
+          CONTRIBUTOR: '### Contributors'
+          COLUMN_PER_ROW: '3'
+          ACCESS_TOKEN: ${{secrets.GH_TOKEN}}
+          IMG_WIDTH: '100'
+          FONT_SIZE: '14'
+          PATH: '/README.md'
+          COMMIT_MESSAGE: 'docs(README): update contributors'
+          AVATAR_SHAPE: 'round'
 
       - uses: actions/setup-python@v2
         with:
@@ -49,13 +59,7 @@ jobs:
         run: >-
           poetry build
 
-      - name: Contribute List
-        uses: akhilmhdh/contributors-readme-action@v2.3.10
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          readme_path: README.md
-          auto_detect_branch_protection: false
+
 
       - name: create github release
         id: create_release

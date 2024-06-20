@@ -85,12 +85,5 @@ make release
 ```
 
 
-## Collaborators
+### Contributors
 
-<!-- readme: collaborators -start -->
-<!-- readme: collaborators -end -->
-
-## Contributors
-
-<!-- readme: contributors -start -->
-<!-- readme: contributors -end -->
