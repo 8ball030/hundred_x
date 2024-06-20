@@ -1,5 +1,5 @@
 [version]
-current = "0.1.17"
+current = "0.1.18"
 
 # Example of a semver regexp.
 # Make sure this matches current_version before
