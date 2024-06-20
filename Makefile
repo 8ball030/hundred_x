@@ -2,6 +2,9 @@
 tests:
 	poetry run pytest tests -vv
 
+install:
+	poetry install
+
 fmt:
 	poetry run black tests hundred_x examples
 	poetry run isort tests hundred_x examples
