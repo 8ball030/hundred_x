@@ -18,14 +18,19 @@ class AsyncHundredXClient(HundredXClient):
 
     async def get_position(self, symbol: str):
         """
-        Get the position of the given symbol.
+        Get the position for a specific symbol.
         """
         message = {
             "symbol": symbol,
             "account": self.public_key,
             "subAccountId": self.subaccount_id,
         }
-        return await self.send_message_to_endpoint("/v1/positionRisk", "GET", message)
+        return await self.send_message_to_endpoint(
+            endpoint="/v1/positionRisk",
+            method="GET",
+            message=message,
+            authenticated=True,
+        )
 
     async def get_spot_balances(self):
         """
@@ -146,12 +151,21 @@ class AsyncHundredXClient(HundredXClient):
         """
         payload = from_message_to_payload(message)
         async with httpx.AsyncClient() as client:
-            response = await client.request(
-                method,
-                self.rest_url + endpoint,
-                headers={} if not authenticated else self.authenticated_headers,
-                json=payload,
-            )
+            if method.upper() == "GET":
+                response = await client.request(
+                    method,
+                    self.rest_url + endpoint,
+                    headers={} if not authenticated else self.authenticated_headers,
+                    params=payload,
+                )
+            else:
+                response = await client.request(
+                    method,
+                    self.rest_url + endpoint,
+                    headers={} if not authenticated else self.authenticated_headers,
+                    json=payload,
+                )
+            
             if response.status_code != 200:
                 raise Exception(f"Failed to send message: {response.text} {response.status_code} {self.rest_url} {payload}")
             return response.json()
