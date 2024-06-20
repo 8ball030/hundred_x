@@ -2,21 +2,16 @@
 
 name: release & publish workflow
 
-# Controls when the action will run.
 on:
-  # Triggers the workflow on push events but only for the master branch
   push:
     tags:
       - 'v*'
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 permissions:
   id-token: write
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "release"
   release:
     name: Create Release
     runs-on: ubuntu-20.04
@@ -25,7 +20,6 @@ jobs:
       matrix:
         python-versions: [3.10.4]
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Get version from tag
         id: tag_name
@@ -33,7 +27,6 @@ jobs:
           echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
         shell: bash
 
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: BobAnkh/add-contributors@master
         with:
@@ -59,8 +52,6 @@ jobs:
         run: >-
           poetry build
 
-
-
       - name: create github release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -72,7 +63,6 @@ jobs:
           draft: false
           prerelease: false
       
-
       - name: publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
