@@ -6,7 +6,8 @@ import requests
 from decimal import Decimal
 
 from hundred_x.client import HundredXClient
-from hundred_x.eip_712 import Order, CancelOrders, CancelOrder
+from hundred_x.eip_712 import Order, CancelOrders, CancelOrder, LoginMessage
+from hundred_x.constants import LOGIN_MESSAGE
 from hundred_x.enums import OrderSide, OrderType, TimeInForce
 from hundred_x.utils import from_message_to_payload, get_abi
 
@@ -130,6 +131,14 @@ class AsyncHundredXClient(HundredXClient):
         )
         response = await self.send_message_to_endpoint("/v1/openOrders", "DELETE", message)
         return response
+    
+    async def login(self):
+        """
+        Login to the exchange.
+        """
+        response = await self.create_authenticated_session_with_service()
+        if response is None:
+            raise Exception("Failed to login")
 
     async def send_message_to_endpoint(self, endpoint: str, method: str, message: dict, authenticated: bool = True):
         """
@@ -146,6 +155,17 @@ class AsyncHundredXClient(HundredXClient):
             if response.status_code != 200:
                 raise Exception(f"Failed to send message: {response.text} {response.status_code} {self.rest_url} {payload}")
             return response.json()
+
+    async def create_authenticated_session_with_service(self):
+        login_payload = self.generate_and_sign_message(
+            LoginMessage,
+            message=LOGIN_MESSAGE,
+            timestamp=self._current_timestamp(),
+            **self.get_shared_params(),
+        )
+        response = await self.send_message_to_endpoint("/v1/session/login", "POST", login_payload, authenticated=False)
+        self.session_cookie = response.get("value")
+        return response
 
     async def list_products(self):
         """
