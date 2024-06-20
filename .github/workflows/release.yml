@@ -53,6 +53,9 @@ jobs:
         uses: akhilmhdh/contributors-readme-action@v2.3.10
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          readme_path: README.md
+          auto_detect_branch_protection: false
 
       - name: create github release
         id: create_release
