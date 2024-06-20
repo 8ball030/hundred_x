@@ -49,6 +49,10 @@ jobs:
         run: >-
           poetry build
 
+      - name: Contribute List
+        uses: akhilmhdh/contributors-readme-action@v2.3.10
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: create github release
         id: create_release
@@ -60,6 +64,7 @@ jobs:
           files: dist/*.whl
           draft: false
           prerelease: false
+      
 
       - name: publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

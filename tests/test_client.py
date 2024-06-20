@@ -368,3 +368,11 @@ class TestStagingClient(Client, TestCase):
     """
 
     environment: Environment = Environment.TESTNET
+
+
+class TestProdClient(Client, TestCase):
+    """
+    Base class for the Client class tests.
+    """
+
+    environment: Environment = Environment.PROD
