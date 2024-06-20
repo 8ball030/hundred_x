@@ -6,7 +6,7 @@ import requests
 from decimal import Decimal
 
 from hundred_x.client import HundredXClient
-from hundred_x.eip_712 import Order, CancelOrders
+from hundred_x.eip_712 import Order, CancelOrders, CancelOrder
 from hundred_x.enums import OrderSide, OrderType, TimeInForce
 from hundred_x.utils import from_message_to_payload, get_abi
 
@@ -46,6 +46,20 @@ class AsyncHundredXClient(HundredXClient):
             **self.get_shared_params(),
         )
         response = await self.send_message_to_endpoint("/v1/order", "POST", message)
+        return response
+
+    async def cancel_order(self, subaccount_id: int, product_id: int, order_id: int):
+        """
+        Cancel an order.
+        """
+        message = self.generate_and_sign_message(
+            CancelOrder,
+            subAccountId=subaccount_id,
+            productId=product_id,
+            orderId=order_id,
+            **self.get_shared_params(),
+        )
+        response = await self.send_message_to_endpoint("/v1/order", "DELETE", message)
         return response
 
     async def cancel_and_replace_order(
