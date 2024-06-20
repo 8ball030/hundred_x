@@ -79,8 +79,10 @@ make all
 
 ## Releasing
 
-Releas
+Release
 ```bash
+make release
+```
 
 
 ## Collaborators
