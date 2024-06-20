@@ -15,6 +15,27 @@ class AsyncHundredXClient(HundredXClient):
     Asynchronous client for the HundredX API.
     """
 
+    async def get_position(self, symbol: str):
+        """
+        Get the position of the given symbol.
+        """
+        message = {
+            "symbol": symbol,
+            "account": self.public_key,
+            "subAccountId": self.subaccount_id,
+        }
+        return await self.send_message_to_endpoint("/v1/positionRisk", "GET", message)
+
+    async def get_spot_balances(self):
+        """
+        Get the spot balances.
+        """
+        message = {
+            "account": self.public_key,
+            "subAccountId": self.subaccount_id,
+        }
+        return await self.send_message_to_endpoint("/v1/balances", "GET", message)
+
     async def create_and_send_order(
         self,
         subaccount_id: int,
