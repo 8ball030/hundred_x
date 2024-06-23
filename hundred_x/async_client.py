@@ -42,6 +42,15 @@ class AsyncHundredXClient(HundredXClient):
         }
         return await self.send_message_to_endpoint("/v1/balances", "GET", message)
 
+    async def get_open_orders(self, symbol: str = None):
+        """
+        Get the open orders for a specific symbol.
+        """
+        params = {"symbol": symbol, "account": self.public_key, "subAccountId": self.subaccount_id}
+        if symbol is None:
+            del params["symbol"]
+        return await self.send_message_to_endpoint("/v1/orders", "GET", params)
+
     async def create_and_send_order(
         self,
         subaccount_id: int,
