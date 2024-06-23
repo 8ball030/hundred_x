@@ -84,13 +84,13 @@ class AsyncHundredXClient(HundredXClient):
         response = await self.send_message_to_endpoint("/v1/order", "POST", message)
         return response
 
-    async def cancel_order(self, subaccount_id: int, product_id: int, order_id: int):
+    async def cancel_order(self, product_id: int, order_id: int):
         """
         Cancel an order.
         """
         message = self.generate_and_sign_message(
             CancelOrder,
-            subAccountId=subaccount_id,
+            subAccountId=self.subaccount_id,
             productId=product_id,
             orderId=order_id,
             **self.get_shared_params(),
