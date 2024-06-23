@@ -49,7 +49,7 @@ class AsyncHundredXClient(HundredXClient):
         params = {"symbol": symbol, "account": self.public_key, "subAccountId": self.subaccount_id}
         if symbol is None:
             del params["symbol"]
-        return await self.send_message_to_endpoint("/v1/orders", "GET", params)
+        return await self.send_message_to_endpoint("/v1/openOrders", "GET", params)
 
     async def create_and_send_order(
         self,
