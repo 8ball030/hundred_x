@@ -41,6 +41,20 @@ class AsyncHundredXClient(HundredXClient):
             message=params,
         )
 
+    async def get_trade_history(self, symbol: str, lookback: int) -> Any:
+        """
+        Get the trade history for a specific symbol.
+        """
+        params = {
+            "symbol": symbol,
+            "limit": lookback,
+        }
+        return await self.send_message_to_endpoint(
+            endpoint=f"/v1/trade-history",
+            method="GET",
+            message=params,
+        )
+
     async def get_position(self, symbol: str):
         """
         Get the position for a specific symbol.
