@@ -228,21 +228,3 @@ class AsyncHundredXClient(HundredXClient):
         response = await self.send_message_to_endpoint("/v1/session/login", "POST", login_payload, authenticated=False)
         self.session_cookie = response.get("value")
         return response
-
-    async def list_products(self):
-        """
-        List all products available on the exchange.
-        """
-        return super().list_products()
-
-    async def get_product(self, symbol: str):
-        """
-        Get a specific product available on the exchange.
-        """
-        return super().get_product(symbol)
-
-    async def get_server_time(self):
-        """
-        Get the server time.
-        """
-        return super().get_server_time()
