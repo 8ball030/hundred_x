@@ -16,6 +16,16 @@ class AsyncHundredXClient(HundredXClient):
     Asynchronous client for the HundredX API.
     """
 
+    async def get_symbol_info(self, symbol: str):
+        """
+        Get the symbol info for a specific symbol.
+        """
+        response = await self.send_message_to_endpoint(
+            endpoint=f"/v1/ticker/24hr?symbol={symbol}",
+            method="GET",
+            )
+        return response[0]
+
     async def get_position(self, symbol: str):
         """
         Get the position for a specific symbol.
@@ -154,7 +164,7 @@ class AsyncHundredXClient(HundredXClient):
         if response is None:
             raise Exception("Failed to login")
 
-    async def send_message_to_endpoint(self, endpoint: str, method: str, message: dict, authenticated: bool = True):
+    async def send_message_to_endpoint(self, endpoint: str, method: str, message: dict = {}, authenticated: bool = True):
         """
         Send a message to an endpoint.
         """
