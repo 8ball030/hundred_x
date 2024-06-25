@@ -1,6 +1,7 @@
 """
 Async client for the HundredX API
 """
+from typing import Any
 import httpx
 import requests
 from decimal import Decimal
@@ -25,6 +26,20 @@ class AsyncHundredXClient(HundredXClient):
             method="GET",
             )
         return response[0]
+        
+    async def get_depth(self, symbol: str, **kwargs) -> Any:
+        """
+        Get the depth for a specific symbol.
+        """
+        params = {
+            "symbol": symbol,
+            "limit": kwargs.get("limit", 5),
+        }
+        return await self.send_message_to_endpoint(
+            endpoint=f"/v1/depth",
+            method="GET",
+            message=params,
+        )
 
     async def get_position(self, symbol: str):
         """
