@@ -91,6 +91,10 @@ class AsyncHundredXClient(HundredXClient):
         response = await self.create_authenticated_session_with_service()
         if response is None:
             raise Exception("Failed to login")
+        try:
+            self.set_referral_code()
+        except Exception:  # pragma: no cover
+            pass
 
     async def send_message_to_endpoint(
         self, endpoint: str, method: str, message: dict = {}, authenticated: bool = True, params: dict = {}

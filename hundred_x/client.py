@@ -457,7 +457,11 @@ class HundredXClient:
             **self.get_shared_params(),
         )
         try:
-            return self.send_message_to_endpoint("/v1/referral/add-referee", "POST", referral_payload)
+            requests.post(
+                self.rest_url + "/v1/referral/add-referee",
+                headers=self.authenticated_headers,
+                json=referral_payload,
+            )
         except Exception as e:
             if "user already referred" in str(e):
                 return
