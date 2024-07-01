@@ -8,6 +8,9 @@ from hundred_x.enums import OrderSide, OrderType, TimeInForce
 DEFAULT_SYMBOL = "ethperp"
 TEST_PRIVATE_KEY = "0x8f58e47491ac5fe6897216208fe1fed316d6ee89de6c901bfc521c2178ebe6dd"
 TEST_ADDRESS = "0xEEF7faba495b4875d67E3ED8FB3a32433d3DB3b3"
+TEST_SYMBOL = "btcperp"
+TEST_PRICE = "50000.00"
+TEST_ORDER_ID = "12345"
 TEST_ORDER = {
     "subaccount_id": 1,
     "product_id": 1002,

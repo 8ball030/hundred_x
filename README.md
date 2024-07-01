@@ -27,6 +27,7 @@ price = client.get_product(DEFAULT_SYMBOL)
 print(price)
 ```
 
+Fopr a demonstration of the async client please refer to the file in examples/async_client.py
 
 
 ## Installation

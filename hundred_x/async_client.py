@@ -2,7 +2,15 @@
 Async client for the HundredX API
 """
 
+from typing import Any
+
+import httpx
+
 from hundred_x.client import HundredXClient
+from hundred_x.constants import LOGIN_MESSAGE
+from hundred_x.eip_712 import LoginMessage
+from hundred_x.exceptions import ClientError
+from hundred_x.utils import from_message_to_payload
 
 
 class AsyncHundredXClient(HundredXClient):
@@ -10,20 +18,114 @@ class AsyncHundredXClient(HundredXClient):
     Asynchronous client for the HundredX API.
     """
 
-    async def list_products(self):
+    async def get_symbol(self, symbol: str = None):
         """
-        List all products available on the exchange.
+        Get the symbol infos.
+        If symbol is None, return all symbols.
         """
-        return super().list_products()
+        response = await super().get_symbol(symbol)
+        if symbol:
+            return response[0]
+        else:
+            return response
 
-    async def get_product(self, symbol: str):
+    async def get_depth(self, symbol: str, **kwargs) -> Any:
         """
-        Get a specific product available on the exchange.
+        Get the depth for a specific symbol.
         """
-        return super().get_product(symbol)
+        return await super().get_depth(symbol, **kwargs)
 
-    async def get_server_time(self):
+    async def get_trade_history(self, symbol: str, lookback: int = 10, **kwargs) -> Any:
         """
-        Get the server time.
+        Get the trade history for a specific symbol.
+        if symbol is None, return all trade history.
         """
-        return super().get_server_time()
+        return await super().get_trade_history(symbol, lookback, **kwargs)
+
+    async def get_position(self, symbol: str = None):
+        """
+        Get the position for a specific symbol.
+        """
+        return await super().get_position(symbol)
+
+    async def get_spot_balances(self):
+        """
+        Get the spot balances.
+        """
+        return await super().get_spot_balances()
+
+    async def get_open_orders(self, symbol: str = None):
+        """
+        Get the open orders for a specific symbol.
+        """
+        return await super().get_open_orders(symbol)
+
+    async def create_order(self, *args, **kwargs):
+        """
+        Create and send order.
+        """
+        return await super().create_order(*args, **kwargs)
+
+    async def cancel_order(self, *args, **kwargs):
+        """
+        Cancel an order.
+        """
+        return await super().cancel_order(*args, **kwargs)
+
+    async def cancel_and_replace_order(self, *args, **kwargs):
+        """
+        Cancel and replace an order.
+        """
+        return await super().cancel_and_replace_order(*args, **kwargs)
+
+    async def cancel_all_orders(self, subaccount_id: int, product_id: int):
+        """
+        Cancel all orders.
+        """
+        return await super().cancel_all_orders(subaccount_id, product_id)
+
+    async def login(self):
+        """
+        Login to the exchange.
+        """
+        response = await self.create_authenticated_session_with_service()
+        if response is None:
+            raise Exception("Failed to login")
+
+    async def send_message_to_endpoint(
+        self, endpoint: str, method: str, message: dict = {}, authenticated: bool = True, params: dict = {}
+    ):
+        """
+        Send a message to an endpoint.
+        """
+        if not self._validate_function(
+            endpoint,
+        ):
+            raise ClientError(f"Invalid endpoint: {endpoint}")
+        payload = from_message_to_payload(message)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.request(
+                method,
+                self.rest_url + endpoint,
+                params=params,
+                headers={} if not authenticated else self.authenticated_headers,
+                json=payload,
+            )
+
+            if response.status_code != 200:
+                raise Exception(
+                    f"Failed to send message: {response.text} {response.status_code} {self.rest_url} {payload}"
+                )
+            return response.json()
+
+    async def create_authenticated_session_with_service(self):
+        login_payload = self.generate_and_sign_message(
+            LoginMessage,
+            message=LOGIN_MESSAGE,
+            timestamp=self._current_timestamp(),
+            **self.get_shared_params(),
+        )
+        response = await self.send_message_to_endpoint("/v1/session/login", "POST", login_payload, authenticated=False)
+        self.session_cookie = response.get("value")
+        return response

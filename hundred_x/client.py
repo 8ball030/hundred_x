@@ -48,12 +48,17 @@ class HundredXClient:
     public_functions: List[str] = [
         "/v1/products",
         "/v1/products/{product_symbol}",
+        "/v1/ticker/24hr?symbol={symbol}",
         "/v1/trade-history",
         "/v1/time",
         "/v1/uiKlines",
         "/v1/ticker/24hr",
         "/v1/depth",
     ]
+
+    @property
+    def http_client(self):
+        return requests
 
     def __init__(
         self,
@@ -87,7 +92,6 @@ class HundredXClient:
             chainId=CONTRACTS[env]["CHAIN_ID"],
             verifyingContract=CONTRACTS[env]["VERIFYING_CONTRACT"],
         )
-        self.set_referral_code()
 
     def _validate_function(
         self,
@@ -133,7 +137,9 @@ class HundredXClient:
             params["subAccountId"] = subaccount_id
         return params
 
-    def send_message_to_endpoint(self, endpoint: str, method: str, message: dict, authenticated: bool = True):
+    def send_message_to_endpoint(
+        self, endpoint: str, method: str, message: dict = {}, authenticated: bool = True, params=None
+    ):
         """
         Send a message to an endpoint.
         """
@@ -142,9 +148,10 @@ class HundredXClient:
         ):
             raise ClientError(f"Invalid endpoint: {endpoint}")
         payload = from_message_to_payload(message)
-        response = requests.request(
+        response = self.http_client.request(
             method,
             self.rest_url + endpoint,
+            params=params,
             headers={} if not authenticated else self.authenticated_headers,
             json=payload,
         )
@@ -199,13 +206,15 @@ class HundredXClient:
 
     def cancel_and_replace_order(
         self,
-        subaccount_id: int,
         product_id: int,
         quantity: int,
         price: int,
         side: OrderSide,
         order_id_to_cancel: str,
         nonce: int = 0,
+        subaccount_id: int = None,
+        order_type: OrderType = OrderType.LIMIT_MAKER,
+        time_in_force: TimeInForce = TimeInForce.GTC,
     ):
         """
         Cancel and replace an order.
@@ -213,6 +222,8 @@ class HundredXClient:
         ts = self._current_timestamp()
         if nonce == 0:
             nonce = ts
+        if subaccount_id is None:
+            subaccount_id = self.subaccount_id
         _message = self.generate_and_sign_message(
             Order,
             subAccountId=subaccount_id,
@@ -220,8 +231,8 @@ class HundredXClient:
             quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
             price=int(Decimal(str(price)) * Decimal(1e18)),
             isBuy=side.value,
-            orderType=OrderType.LIMIT_MAKER.value,
-            timeInForce=TimeInForce.GTC.value,
+            orderType=order_type.value,
+            timeInForce=time_in_force.value,
             nonce=nonce,
             expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
             **self.get_shared_params(),
@@ -231,13 +242,13 @@ class HundredXClient:
         message["idToCancel"] = order_id_to_cancel
         return self.send_message_to_endpoint("/v1/order/cancel-and-replace", "POST", message)
 
-    def cancel_order(self, subaccount_id: int, product_id: int, order_id: int):
+    def cancel_order(self, product_id: int, order_id: int, subaccount_id: int = None):
         """
         Cancel an order.
         """
         message = self.generate_and_sign_message(
             CancelOrder,
-            subAccountId=subaccount_id,
+            subAccountId=self.subaccount_id if subaccount_id is None else subaccount_id,
             productId=product_id,
             orderId=order_id,
             **self.get_shared_params(),
@@ -264,6 +275,10 @@ class HundredXClient:
             **self.get_shared_params(),
         )
         response = self.send_message_to_endpoint("/v1/session/login", "POST", login_payload, authenticated=False)
+        try:
+            self.set_referral_code()
+        except Exception:  # pylint: disable=broad-except
+            pass
         self.session_cookie = response.get("value")
         return response
 
@@ -283,10 +298,11 @@ class HundredXClient:
         """
         Get the trade history for a specific product symbol and lookback amount.
         """
-        return requests.get(
-            self.rest_url + "/v1/trade-history",
+        return self.send_message_to_endpoint(
+            endpoint="/v1/trade-history",
+            method="GET",
             params={"symbol": symbol, "lookback": lookback},
-        ).json()
+        )
 
     def get_server_time(self) -> Any:
         """
@@ -308,12 +324,23 @@ class HundredXClient:
             params=params,
         ).json()
 
-    def get_symbol(self, symbol: str) -> Any:
+    def get_symbol(self, symbol: str = None) -> Any:
         """
         Get the details of a specific symbol.
+        If symbol is None, return all symbols.
         """
-        endpoint = f"/v1/ticker/24hr?symbol={symbol}"
-        return requests.get(self.rest_url + endpoint).json()[0]
+        response = self.send_message_to_endpoint(
+            endpoint="/v1/ticker/24hr",
+            method="GET",
+            message={},
+            params={"symbol": symbol} if symbol else {},
+        )
+        if not isinstance(response, list):
+            return response
+        if symbol:
+            return response[0]
+        else:
+            return response
 
     def get_depth(self, symbol: str, **kwargs) -> Any:
         """
@@ -324,10 +351,11 @@ class HundredXClient:
             var = kwargs.get(arg)
             if var is not None:
                 params[arg] = var
-        return requests.get(
-            self.rest_url + "/v1/depth",
+        return self.send_message_to_endpoint(
+            endpoint="/v1/depth",
+            method="GET",
             params=params,
-        ).json()
+        )
 
     def login(self):
         """
@@ -359,24 +387,21 @@ class HundredXClient:
         """
         Get the spot balances.
         """
-        return requests.get(
-            self.rest_url + "/v1/balances",
-            headers=self.authenticated_headers,
+        return self.send_message_to_endpoint(
+            "/v1/balances",
+            "GET",
             params={"account": self.public_key, "subAccountId": self.subaccount_id},
-        ).json()
+            authenticated=True,
+        )
 
-    def get_position(self):
+    def get_position(self, symbol: str = None):
         """
         Get all positions for the subaccount.
         """
-        return requests.get(
-            self.rest_url + "/v1/positionRisk",
-            headers=self.authenticated_headers,
-            params={
-                "account": self.public_key,
-                "subAccountId": self.subaccount_id,
-            },
-        ).json()
+        params = {"account": self.public_key, "subAccountId": self.subaccount_id}
+        if symbol is not None:
+            params["symbol"] = symbol
+        return self.send_message_to_endpoint("/v1/positionRisk", "GET", params=params, authenticated=True)
 
     def get_approved_signers(self):
         """
@@ -398,11 +423,7 @@ class HundredXClient:
         params = {"account": self.public_key, "subAccountId": self.subaccount_id}
         if symbol is not None:
             params["symbol"] = symbol
-        return requests.get(
-            self.rest_url + "/v1/openOrders",
-            headers=self.authenticated_headers,
-            params=params,
-        ).json()
+        return self.send_message_to_endpoint("/v1/openOrders", "GET", params=params, authenticated=True)
 
     def get_orders(self, symbol: str = None, ids: List[str] = None):
         """
