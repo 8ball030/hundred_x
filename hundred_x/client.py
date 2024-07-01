@@ -92,6 +92,10 @@ class HundredXClient:
             chainId=CONTRACTS[env]["CHAIN_ID"],
             verifyingContract=CONTRACTS[env]["VERIFYING_CONTRACT"],
         )
+        try:
+            self.set_referral_code()
+        except Exception:  # pragma: no cover
+            pass
 
     def _validate_function(
         self,
