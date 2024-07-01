@@ -23,8 +23,6 @@ async def main():
     print(f"Using Subaccount ID: {client.subaccount_id}")
 
     # In order to hit the authenticated endpoints, we need to login.
-    await client.login()
-
     # We check the initial balance.
     print("Initial Balance")
     response = await client.get_spot_balances()

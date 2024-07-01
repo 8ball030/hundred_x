@@ -76,14 +76,7 @@ class HundredXClient:
             raise UserInputValidationError(
                 f"Invalid environment: {env} Missing REST or WEBSOCKET URL for the environment."
             )
-        if private_key:
-            self.wallet = eth_account.Account.from_key(private_key)
-            self.public_key = self.wallet.address
-            if not (0 <= subaccount_id <= 255):
-                raise UserInputValidationError(
-                    f"Subaccount ID must be between 0 and 255. It is instead: {subaccount_id}"
-                )
-            self.subaccount_id = subaccount_id
+
         self.session_cookie = {}
         self.web3 = Web3(Web3.HTTPProvider(RPC_URLS[env]))
         self.domain = make_domain(
@@ -92,6 +85,19 @@ class HundredXClient:
             chainId=CONTRACTS[env]["CHAIN_ID"],
             verifyingContract=CONTRACTS[env]["VERIFYING_CONTRACT"],
         )
+        if private_key:
+            self.wallet = eth_account.Account.from_key(private_key)
+            self.public_key = self.wallet.address
+            if not (0 <= subaccount_id <= 255):
+                raise UserInputValidationError(
+                    f"Subaccount ID must be between 0 and 255. It is instead: {subaccount_id}"
+                )
+            self.subaccount_id = subaccount_id
+            self.login()
+            try:
+                self.set_referral_code()
+            except Exception:  # pylint: disable=broad-except
+                pass
 
     def _validate_function(
         self,
@@ -274,11 +280,10 @@ class HundredXClient:
             timestamp=self._current_timestamp(),
             **self.get_shared_params(),
         )
-        response = self.send_message_to_endpoint("/v1/session/login", "POST", login_payload, authenticated=False)
-        try:
-            self.set_referral_code()
-        except Exception:  # pylint: disable=broad-except
-            pass
+        response = requests.post(
+            self.rest_url + "/v1/session/login",
+            json=login_payload,
+        ).json()
         self.session_cookie = response.get("value")
         return response
 
