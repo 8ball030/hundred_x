@@ -56,43 +56,42 @@ For asynchronous usage, refer to 'examples/async_client.py'.
 
 
 ```shell
-git clone https://github.com/8ball030/hundred_x.git
-cd hundred_x
+git clone https://github.com/8ball030/hundred_x.git &&cd hundred_x
 ```
 
-2. Install dependencies:
+2. Create a development environment:
 
 ```shell
-poetry install
+poetry install && poetry shell
 ```
 
 ### Development Commands
 
 ```shell
 # Format Code
-poetry run make fmt
+make fmt
 
 # Lint Code
-poetry run make lint
+make lint
 
 # Run Tests
-poetry run make tests
+make tests
 
 # Run all checks
-poetry run make all
+make all
 
 # Create a new release
-poetry run make release
+make release
 ```
 
 ### Docker Environemnt
 
 ```shell
 # Build Docker Image
-docker buildx build --platform linux/amd64 . -t hundred-x-client
+docker buildx build --platform linux/amd64 . -t test
 
 # Run tests in Docker
-docker run -v (pwd):/app -it hundred-x-client poetry run make tests
+docker run -v (pwd):/app -it test
 ```
 
 ## Contributing
