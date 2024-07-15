@@ -319,7 +319,7 @@ class Client:
             **TEST_ORDER,
         )
         assert order is not None
-        cancel_order = self.client.cancel_order(order['subAccountId'], order['productId'], order['id'])
+        cancel_order = self.client.cancel_order(order['productId'], order['id'], order['subAccountId'])
         assert cancel_order is not None
 
     def test_cancel_orders(self):
