@@ -183,30 +183,37 @@ class HundredXClient:
         subaccount_id: int,
         product_id: int,
         quantity: int,
-        price: int,
         side: OrderSide,
         order_type: OrderType,
         time_in_force: TimeInForce,
+        price: int = None,
         nonce: int = 0,
     ):
         """
         Create an order.
         """
+        if all([price is None, order_type is OrderType.LIMIT]):
+            raise UserInputValidationError("Price is required for a limit order.")
         ts = self._current_timestamp()
         if nonce == 0:
             nonce = ts
+
+        params = {
+            "subAccountId": subaccount_id,
+            "productId": product_id,
+            "quantity": int(Decimal(str(quantity)) * Decimal(1e18)),
+            "isBuy": side.value,
+            "orderType": order_type.value,
+            "timeInForce": time_in_force.value,
+            "nonce": nonce,
+            "expiration": (ts + 1000 * 60 * 60 * 24) * 1000,
+            **self.get_shared_params(),
+        }
+        if price is not None:
+            params["price"] = int(Decimal(str(price)) * Decimal(1e18))
         message = self.generate_and_sign_message(
             Order,
-            subAccountId=subaccount_id,
-            productId=product_id,
-            quantity=int(Decimal(str(quantity)) * Decimal(1e18)),
-            price=int(Decimal(str(price)) * Decimal(1e18)),
-            isBuy=side.value,
-            orderType=order_type.value,
-            timeInForce=time_in_force.value,
-            nonce=nonce,
-            expiration=(ts + 1000 * 60 * 60 * 24) * 1000,
-            **self.get_shared_params(),
+            **params,
         )
         return self.send_message_to_endpoint("/v1/order", "POST", message)
 

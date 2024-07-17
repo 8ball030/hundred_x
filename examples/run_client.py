@@ -38,7 +38,7 @@ async def main():
     response = await client.create_order(
         subaccount_id=subaccount_id,
         product_id=response['productId'],  # This is the product_id for the symbol 'btcperp
-        quantity=0.001,
+        quantity=0.0001,
         price=round(int(response['markPrice']) * 0.99 / 1e18),  # This is the current price of the symbol 'btcperp'
         side=OrderSide.BUY,
         order_type=OrderType.LIMIT,
