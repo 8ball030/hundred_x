@@ -1,8 +1,12 @@
-# 100x Python Client
+# 100x
 
-This is a Python client for the 100x API. It is a simple wrapper around the API, and provides a convenient way to interact with the API from Python.
+A Python client for the 100x API, providing a convenient wrapper to interact with the API.
 
-The client offers a number of methods to interact with the API.
+## Installation
+
+```shell
+pip install hundred-x
+````
 
 ## Usage
 
@@ -11,82 +15,86 @@ The client offers a number of methods to interact with the API.
 from hundred_x.client import HundredXClient
 from hundred_x.enums import Environment
 
-DEFAULT_SYMBOL="ethperp"
-
 client = HundredXClient(
     private_key="your_private_key",
     environment=Environment.PROD
 )
 
-# Get the current price of a symbol
+# List available products
 products = client.list_products()
 print(products) 
 
 # Get the current price of a symbol
-price = client.get_product(DEFAULT_SYMBOL)
+price = client.get_product("ethperp")
 print(price)
+
+# Place an order
+order = client.place_order(
+    symbol="ethperp",
+    side="BUY",
+    order_type="LIMIT",
+    post_only=False,
+    size="0.1",
+    price="1800",
+    limit_fee_rate="0.001"
+)
+print(order)
 ```
 
-Fopr a demonstration of the async client please refer to the file in examples/async_client.py
-
-
-## Installation
-```bash
-pip install hundred-x
-```
-
-## Running a dockerised environment
-```bash
-docker buildx build --platform linux/amd64 . -t test
-# now we have the dependencies installed,
-# we can mount the current directory and run the tests against the dockerised environment
-docker run -v (pwd):/app -it test
-```
-
+For asynchronous usage, refer to 'examples/async_client.py'.
 
 ## Development
 
-### Installation
+### Prequisites
 
-```bash
-git clone git@github.com:8ball030/hundred_x.git
-cd hundred_x
-make install
+- Python 3.8+
+- [Poetry](https://python-poetry.org/)
+
+### Setup
+
+1. Clone the repository:
+
+
+```shell
+git clone https://github.com/8ball030/hundred_x.git &&cd hundred_x
 ```
 
-### Formatting
+2. Create a development environment:
 
-```bash
+```shell
+poetry install && poetry shell
+```
+
+### Development Commands
+
+```shell
+# Format Code
 make fmt
-```
 
-### Linting
-
-```bash
+# Lint Code
 make lint
-```
 
-### Tests
-
-```bash
+# Run Tests
 make tests
-```
 
-For convience, all commands can be run with:
-
-```
+# Run all checks
 make all
-```
 
-## Releasing
-
-Release
-```bash
+# Create a new release
 make release
 ```
 
+### Docker Environemnt
 
-### Contributors
+```shell
+# Build Docker Image
+docker buildx build --platform linux/amd64 . -t test
+
+# Run tests in Docker
+docker run -v (pwd):/app -it test
+```
+
+## Contributing
 
 <table>
 <tr>
@@ -122,4 +130,3 @@ make release
     </td>
 </tr>
 </table>
-
