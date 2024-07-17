@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hundred-x"
-version = "0.1.27"
+version = "0.1.28"
 description = "# hundred_x"
 authors = ["8baller <8ball030@gmail.com>"]
 readme = "README.md"
