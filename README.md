@@ -93,8 +93,9 @@ docker buildx build --platform linux/amd64 . -t test
 # Run tests in Docker
 docker run -v (pwd):/app -it test
 ```
+### Contributing
 
-## Contributing
+### Contributors
 
 <table>
 <tr>
