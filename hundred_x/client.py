@@ -44,6 +44,7 @@ class HundredXClient:
         "/v1/session/login",
         "/v1/referral/add-referee",
         "/v1/session/logout",
+        "/v1/account-health"
     ]
     public_functions: List[str] = [
         "/v1/products",
