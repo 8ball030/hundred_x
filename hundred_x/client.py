@@ -306,6 +306,17 @@ class HundredXClient:
         """
         return requests.get(self.rest_url + f"/v1/products/{product_symbol}").json()
 
+    def get_account_health(self) -> Any:
+        """
+        Get the account health.
+        """
+        params = {"account": self.public_key, "subAccountId": self.subaccount_id}
+        return self.send_message_to_endpoint(
+            endpoint="/v1/account-health",
+            method="GET",
+            params=params,
+        )
+
     def get_trade_history(self, symbol: str, lookback: int) -> Any:
         """
         Get the trade history for a specific product symbol and lookback amount.
