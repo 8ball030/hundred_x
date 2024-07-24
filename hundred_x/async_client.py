@@ -27,6 +27,12 @@ class AsyncHundredXClient(HundredXClient):
         else:
             return response
 
+    async def get_account_health(self) -> Any:
+        """
+        Get the account health.
+        """
+        return await super().get_account_health()
+
     async def get_depth(self, symbol: str, **kwargs) -> Any:
         """
         Get the depth for a specific symbol.

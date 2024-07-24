@@ -44,6 +44,7 @@ class HundredXClient:
         "/v1/session/login",
         "/v1/referral/add-referee",
         "/v1/session/logout",
+        "/v1/account-health"
     ]
     public_functions: List[str] = [
         "/v1/products",
@@ -305,6 +306,17 @@ class HundredXClient:
         Get the details of a specific product.
         """
         return requests.get(self.rest_url + f"/v1/products/{product_symbol}").json()
+
+    def get_account_health(self) -> Any:
+        """
+        Get the account health.
+        """
+        params = {"account": self.public_key, "subAccountId": self.subaccount_id}
+        return self.send_message_to_endpoint(
+            endpoint="/v1/account-health",
+            method="GET",
+            params=params,
+        )
 
     def get_trade_history(self, symbol: str, lookback: int) -> Any:
         """
